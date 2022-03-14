@@ -4,7 +4,7 @@ info:
   x-ibm-name: account-balance
   x-ibm-summary: Removed CORS
   version: 2.0.0
-  description: This API returns Account balance (Available Balance, Reserved Balance)
+  description: This API return Account balance (Available Balance, Reserved Balance)
     against msisdn of the user
 host: $(catalog.host)
 schemes:
