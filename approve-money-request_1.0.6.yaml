@@ -1,0 +1,221 @@
+swagger: "2.0"
+info:
+  title: Approve Money Request
+  x-ibm-name: approve-money-request
+  version: 1.0.6
+  description: This API returns approves the request for money transfer
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: Default Scope for Client Auth
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: Default Scope for Client Auth
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Initiate Money Request
+  description: This API returns approves the request for money transfer
+definitions:
+  Request:
+    type: object
+    properties:
+      amount:
+        type: number
+        format: double
+        example: "100"
+      receiverDetails:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "920341567809"
+      remarks:
+        type: string
+        example: hakjfdsa dajh
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - amount
+    - receiverDetails
+  Response:
+    type: object
+    properties:
+      originatorConversationID:
+        type: string
+        example: 230949290000
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      conversationID:
+        type: string
+        example: AG_20130129T102103
+      commission:
+        type: number
+        format: double
+        example: 2
+      fed:
+        type: number
+        format: double
+        example: 0.5
+      wht:
+        type: number
+        format: double
+        example: 0.3
+      beneficiaryName:
+        type: string
+        example: AAA
+      transEndDate:
+        type: string
+        example: 2004-01-05T00:00:00.000Z
+      transEndTime:
+        type: string
+        example: "03:33:12.943"
+      fee:
+        type: number
+        format: double
+        example: 0.7
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/payment/request/approve:
+    post:
+      tags:
+      - Approve Money Request
+      summary: This API returns approves the request for money transfer
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Failed to approve the request.
+      consumes: []
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/Request'
+      description: The request body for the operation

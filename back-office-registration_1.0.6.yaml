@@ -1,0 +1,539 @@
+swagger: "2.0"
+info:
+  title: Back office Registration
+  x-ibm-name: back-office-registration
+  version: 1.0.6
+  description: |-
+    BO Registration related APIs.
+    Disabled CORS.
+    Enable CORS on this API on request by m11s.
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthoperator:
+  - operator
+- oauthadmin:
+  - admin
+- oauthprovider-admin:
+  - admin
+securityDefinitions:
+  oauthprovider-admin:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauthprovider-admin
+    tokenUrl: https://$(catalog.url)/rest/api/oauthprovider-admin/oauth2/token
+    scopes:
+      admin: ""
+  oauthoperator:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      operator: ""
+  oauthadmin:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      admin: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+definitions:
+  wallet_request:
+    type: object
+    properties:
+      accountStatus:
+        type: string
+        example: parked
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_walletRequests:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T102
+      message_en:
+        type: string
+        example: Get wallet requests successfully
+      message_ur:
+        type: string
+        example: ' ____ __ _________ _______ __ ____ ____ ____'
+      data:
+        type: array
+        items:
+          type: object
+          example:
+          - _id: 5f8c0a577e90348eb877602c
+            cnic: "3740531389703"
+            msisdn: "923042226897"
+            __v: 0
+            accountStatus: parked
+            addressEn: islamabad
+            addressUr: islamabad
+            cnicBackURL: 42be07c1-08e9-42f7-a446-993d6b4b3544.jpg
+            cnicFrontURL: 42be07c1-08e9-42f7-a446-993d6b4b3544.jpg
+            cnicIssueDate: 2019-02-08T00:00:00.000Z
+            email: abc@msn.com
+            firstNameEn: Sobia
+            firstNameUr: Sobia
+            lastNameEn: Sobia
+            lastNameUr: Javed
+            parkedReason: parked reason
+            selfieURL: 42be07c1-08e9-42f7-a446-993d6b4b3544.jpg
+            createTS: 2021-01-07T10:35:04.585Z
+            updateTS: 2021-01-07T10:35:04.585Z
+  wallet_verify_request:
+    type: object
+    properties:
+      _id:
+        type: string
+        example: 5ff6c1973591b35ec3648b60
+      cnic:
+        type: string
+        example: "3756487654983"
+      cnicIssueDate:
+        type: string
+        example: 20-01-2015
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_wallet_verify_request:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T104
+      message_en:
+        type: string
+        example: CNIC verification successful from NADRA, you can proceed for registration
+      message_ur:
+        type: string
+        example: CNIC verification successful from NADRA, you can proceed for registration
+      data:
+        type: object
+        properties:
+          createdDate:
+            type: string
+            example: 2021-01-07T14:07:56.768Z
+          updatedDate:
+            type: string
+            example: 2021-01-07T14:07:57.662Z
+          applicationId:
+            type: string
+            example: "220"
+          status:
+            type: string
+            example: "1"
+          dateFormat:
+            type: string
+            example: dd-MMMM-yyyy
+          id:
+            type: string
+            example: "276154234"
+          msisdn:
+            type: string
+            example: 3338722600
+          cnicNo:
+            type: string
+            example: "3740468134893"
+          nadraTransactionId:
+            type: string
+            example: "2051276154234176134"
+          sendTime:
+            type: string
+            example: 2021-01-07T14:07:56.770Z
+          responseTime:
+            type: string
+            example: 2021-01-07T14:07:57.233Z
+          responseStatus:
+            type: string
+            example: successful
+          isSuccessful:
+            type: string
+            example: "Y"
+          isCompleted:
+            type: string
+            example: "Y"
+          nadraTransactiontTypeId:
+            type: string
+            example: "3"
+          userMsisdn:
+            type: string
+            example: {}
+          successMessage:
+            type: string
+            example: Verified
+          orderType:
+            type: string
+            example: GetCitizenData
+          responseCode:
+            type: string
+            example: "100"
+          name:
+            type: string
+            example: تخار
+          nameEn:
+            type: string
+            example: KASHIF
+          fatherSpouseNameEn:
+            type: string
+            example: "NULL"
+          currentAddress:
+            type: string
+            example: ‬،‪ ‬اسلام‪ ‬آباد‬
+          currentAddressEn:
+            type: string
+            example: ' G - 10/4 ISLAMABAD'
+          permanentAddress:
+            type: string
+            example: ‮ب0/4‬،‪ ‬اسلام‪ ‬آباد‬
+          dateOfBirth:
+            type: string
+            example: 1993-12-26T00:00:00.000Z
+          dateOfExpiry:
+            type: string
+            example: 2028-07-12T00:00:00.000Z
+          genderEn:
+            type: string
+            example: Male
+          motherName:
+            type: string
+            example: ""
+          motherNameEn:
+            type: string
+            example: ""
+          placeOfBirth:
+            type: string
+            example: RAWALPINDI RAWALPINDI
+          nadraCommunicationActionId:
+            type: string
+            example: "5"
+          dataFlag:
+            type: string
+            example: "1"
+          sessionId:
+            type: string
+            example: "2051100000796939649"
+          stcTransactionId:
+            type: string
+            example: "2051276154234176134"
+          areaName:
+            type: string
+            example: punjab
+          birthPlace:
+            type: string
+            example: راولپنڈیراولپنڈی
+          eHour:
+            type: string
+            example: "14"
+          callingSourceId:
+            type: string
+            example: "2"
+          translationCommunicatorId:
+            type: string
+            example: "45938446"
+          issueDate:
+            type: string
+            example: 12-07-2018
+  wallet_request_register:
+    type: object
+    properties:
+      _id:
+        type: string
+        example: 5ff6c1973591b35ec3648b60
+      cnic:
+        type: string
+        example: "3756487654983"
+      cnicIssueDate:
+        type: string
+        example: 20-01-2015
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_wallet_request_register:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T34
+      message_en:
+        type: string
+        example: L0 account registered successfully
+      message_ur:
+        type: string
+        example: L0 account registered successfully
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923338976543"
+          next:
+            type: string
+            example: completed
+  wallet_request_reject:
+    type: object
+    properties:
+      _id:
+        type: string
+        example: 5ff6c1973591b35ec3648b60
+      accountStatus:
+        type: string
+        example: rejected
+      backOfficeReason:
+        type: string
+        example: cnic image is blur
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_wallet_request_reject:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T105
+      message_en:
+        type: string
+        example: Request processed successfully.
+      message_ur:
+        type: string
+        example: Request processed successfully.
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923338976543"
+paths:
+  /rest/api/v1/registration/bo/wallet/requests:
+    post:
+      operationId: walletRequest
+      description: wallet Requests
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/wallet_request'
+        description: The request body for the operation
+        required: true
+      responses:
+        "201":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_walletRequests'
+  /rest/api/v1/registration/bo/request/verify:
+    post:
+      operationId: walletRequestVerify
+      description: wallet Request verify
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/wallet_verify_request'
+        description: The request body for the operation
+        required: true
+      responses:
+        "201":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_wallet_verify_request'
+  /rest/api/v1/registration/bo/request/register:
+    post:
+      operationId: walletRequestRegister
+      description: wallet Request Register
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/wallet_request_register'
+        description: The request body for the operation
+        required: true
+      responses:
+        "201":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_wallet_request_register'
+  /rest/api/v1/registration/bo/request/reject:
+    post:
+      operationId: walletRequestreject
+      description: wallet Request reject
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/wallet_request_reject'
+        description: The request body for the operation
+        required: true
+      responses:
+        "201":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_wallet_request_reject'

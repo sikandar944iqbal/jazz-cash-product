@@ -1,0 +1,481 @@
+swagger: "2.0"
+info:
+  title: Invite & Earn
+  x-ibm-name: invite-earn
+  version: 1.0.5
+  description: |-
+    APIs related to Invite & Earn.
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://loyalty-and-rewards-management.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+definitions:
+  sendInvite:
+    type: object
+    properties:
+      UID:
+        type: string
+        example: 1121adasd3e23a
+      invitationLink:
+        type: string
+        example: http://uniquelink.com
+      invitees:
+        type: array
+        items:
+          type: string
+          example: "923042113532"
+  SendInvitationReminder:
+    type: object
+    properties:
+      receiverMsisdn:
+        type: string
+        example: "9232192727201"
+  EarnReward:
+    type: object
+    properties:
+      name:
+        type: string
+        example: name
+      invitedBy:
+        type: string
+        example: 1121adasd3e23a
+  SendInviteSuccessResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-IE-T32
+      responseMessage:
+        type: string
+        example: Invitation sent successfully
+  TrackInvite:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-IE-T32
+      responseMessage:
+        type: string
+        example: Transaction completed succesfully
+      data:
+        type: object
+        properties:
+          totalEarning:
+            type: number
+            example: 200
+          currentRewardAmount:
+            type: number
+            example: 50
+          invitees:
+            type: array
+            items:
+              type: object
+              properties:
+                receiverMsisdn:
+                  type: string
+                  example: "9232192727201"
+                canSendReminder:
+                  type: boolean
+                  example: false
+                expiresIn:
+                  type: integer
+                  example: 3
+                reminderHour:
+                  type: integer
+                  example: 24
+  SendInvitationReminderResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-IE-T32
+      responseMessage:
+        type: string
+        example: Reminder sent successfully
+  EarnRewardResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-IE-T32
+      responseMessage:
+        type: string
+        example: Reward earned successfully
+  TrackRewards:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-IE-T32
+      responseMessage:
+        type: string
+        example: Transaction completed succesfully
+      data:
+        type: object
+        properties:
+          totalEarning:
+            type: number
+            example: 200
+          currentRewardAmount:
+            type: number
+            example: 50
+          invitees:
+            type: array
+            items:
+              type: object
+              properties:
+                receiverMsisdn:
+                  type: string
+                  example: "9232192727201"
+                rewardEarned:
+                  type: number
+                  example: 50
+paths:
+  /rest/api/v1/reward/invite/send:
+    post:
+      tags:
+      - Invite & Earn
+      description: Send invite(s) to unregistered user(s)
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/sendInvite'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/SendInviteSuccessResponse'
+  /rest/api/v1/reward/invite/track:
+    get:
+      tags:
+      - Invite & Earn
+      description: Returns the list of users with invitation status of pending
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/TrackInvite'
+  /rest/api/v1/reward/invite/reminder/send:
+    post:
+      tags:
+      - Invite & Earn
+      description: Send reminder
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/SendInvitationReminder'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/SendInvitationReminderResponse'
+  /rest/api/v1/reward/invite/rewards/track:
+    get:
+      tags:
+      - Invite & Earn
+      description: Track rewards(Returns the list of msisdn(s) that were registered
+        by users link)
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/TrackRewards'
+  /rest/api/v1/reward/invite/earn:
+    post:
+      tags:
+      - Invite & Earn
+      description: Earn reward when a user registers throught an inviation link
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/EarnReward'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/EarnRewardResponse'

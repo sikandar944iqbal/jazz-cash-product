@@ -1,0 +1,263 @@
+swagger: "2.0"
+info:
+  title: Confirm MasterCard order
+  x-ibm-name: confirm-mastercard-order
+  version: 1.0.2
+  description: This API confirms the master card order placement
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauthmerchant:
+  - merchant
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://secure-card-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Confirm MasterCard order
+definitions:
+  Request:
+    type: object
+    properties:
+      cardOrderDetails:
+        type: object
+        properties:
+          cardID:
+            type: string
+            example: "4"
+          name:
+            type: string
+            example: SAJXX
+          email:
+            type: string
+            example: abc@gmail.com
+          city:
+            type: string
+            example: Lahore
+          deliveryType:
+            type: string
+            example: own_address
+          address:
+            type: string
+            example: house no#12, XXXX
+          nearbBy:
+            type: string
+            example: nearby XXXX
+          referrerNumber:
+            type: string
+            example: SAJXX
+      remarks:
+        type: string
+        example: sample remarks
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+  Response:
+    type: object
+    properties:
+      status:
+        type: string
+        example: 200
+      message:
+        type: string
+        example: success
+      description:
+        type: string
+        example: Order created successfully
+      orderNo:
+        type: string
+        example: "10493107"
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/mastercard/physical/order/confirm:
+    post:
+      security:
+      - Bearer: []
+      tags:
+      - Confirm MasterCard order
+      summary: Confirm master card order
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: header
+        name: X-MPIN
+        required: true
+        type: string
+        description: encrypted
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: VD-VCO-T06 // to be changed
+              responseMessage_en:
+                type: string
+                example: Order Created Successfully.
+              responseMessage_ur:
+                type: string
+                example: Order Created Successfully.
+              data:
+                $ref: '#/definitions/Response'
+              additionalDetails:
+                items:
+                  $ref: '#/definitions/additionalObject'
+        "401":
+          description: Authentication Failed
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: T02
+              responseMessage:
+                type: string
+                example: Authentication Failed.
+        "422":
+          description: Failed to confirm visa card order.
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AL-T02
+              responseMessage:
+                type: string
+                example: Failed to confirm visa card order.
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/Request'
+      description: The request body for the operation

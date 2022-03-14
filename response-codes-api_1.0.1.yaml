@@ -1,0 +1,90 @@
+swagger: "2.0"
+info:
+  title: Response Codes API
+  x-ibm-name: response-codes-api
+  version: 1.0.1
+schemes:
+- https
+basePath: /
+x-ibm-configuration:
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://masterdata-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  application-authentication:
+    certificate: false
+paths:
+  /rest/api/v1/masterdata/localdev/responseCodes:
+    get:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success
+    put:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success
+    post:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success
+    delete:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success
+  /rest/api/v1/masterdata/localdev/responseCodes_New:
+    get:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success
+    put:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success
+    post:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success
+    delete:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success

@@ -1,0 +1,215 @@
+swagger: "2.0"
+info:
+  title: SendMoneytoCNICInit
+  x-ibm-name: sendmoneytocnicinit
+  version: 1.0.7
+  description: API to initiate SendMoney to CNIC, also check confirm API for confirmation
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauthuser:
+  - user
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: Default Scope for Client Auth
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: Default Scope for Client Auth
+  oauthuser:
+    type: oauth2
+    flow: application
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      user: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+definitions:
+  request:
+    type: object
+    properties:
+      amount:
+        type: number
+        example: 100
+      receiverDetails:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "920341567809"
+          cnic:
+            type: string
+            example: "2123242512529"
+      remarks:
+        type: string
+        example: hakjfdsa dajh
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+  response:
+    type: object
+    properties:
+      originatorConversationID:
+        type: string
+        example: 230949290000
+      conversationID:
+        type: string
+        example: AG_20130129T102103
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      receiverCNIC:
+        type: string
+        example: 2123242512529
+      deduction:
+        type: number
+        example: 5000.7
+      commission:
+        type: number
+        example: 2
+      fed:
+        type: number
+        example: 0.5
+      wht:
+        type: number
+        example: 0.3
+      transEndDate:
+        type: string
+        example: 20140102
+      transEndTime:
+        type: string
+        example: 210159
+      fee:
+        type: number
+        example: 0.7
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/payment/cnic:
+    post:
+      operationId: postSync
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: false
+        schema:
+          $ref: '#/definitions/request'
+      responses:
+        "200":
+          description: The operation was successful.
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Failed to send the payment to CNIC.
+      consumes:
+      - application/json

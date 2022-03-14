@@ -1,0 +1,208 @@
+swagger: "2.0"
+info:
+  title: Sign-up Reward
+  x-ibm-name: sign-up-reward
+  version: 1.0.4
+  description: |-
+    This API allows the user to claim their sign up reward.
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauthmerchant:
+  - merchant
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://loyalty-and-rewards-management.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Sign-up Reward
+  description: Sign-up Reward
+paths:
+  /rest/api/v1/payment/reward:
+    get:
+      tags:
+      - Sign-up Reward
+      summary: Claim Sign-up reward
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - consumerApp
+        - merchantApp
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        type: string
+        required: true
+        description: MSISDN of the user.
+      - in: header
+        name: X-MPIN
+        type: string
+        required: true
+        description: MPIN of the user.
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+              responseCode:
+                type: string
+                example: PT-SUR-T02
+              responseMessage_en:
+                type: string
+                example: We have added Rs 50 in your account. You can earn more by
+                  inviting your friends and family.
+              responseMessage_ur:
+                type: string
+                example: We have added Rs 50 in your account. You can earn more by
+                  inviting your friends and family.
+              data:
+                type: object
+                properties:
+                  originatorConversationID:
+                    type: string
+                    example: f2adedfe7ddf421fbaea260d6bdf5129
+                  conversationID:
+                    type: string
+                    example: AG_20200915_0000768e906fdd9d3a2e
+                  commission:
+                    type: number
+                    example: 1.2
+                  beneficiaryName:
+                    type: string
+                    example: Jahangir Khalid
+                  transEndDate:
+                    type: number
+                    example: 20200915
+                  transEndTime:
+                    type: number
+                    example: 103556
+                  amount:
+                    type: number
+                    example: 50
+                  deeplinkName:
+                    type: string
+                    example: Invite and Earn
+                  deeplinkURL:
+                    type: string
+                    example: www.invitenearn.com
+        "401":
+          description: Unable to connect with required API
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-SUR-T01
+              responseMessage_en:
+                type: string
+                example: Failed to connect with Master Data API
+              responseMessage_ur:
+                type: string
+                example: Failed to connect with Master Data API

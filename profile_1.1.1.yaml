@@ -1,0 +1,1113 @@
+swagger: "2.0"
+info:
+  title: Profile
+  x-ibm-name: profile
+  x-ibm-summary: Added new path (/rest/api/v1/account/report/issue)
+  version: 1.1.1
+  description: This API returns profile (Name, Image url, email, CNIC, msisdn) of
+    a user
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthuser:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      user: Default Scope
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: Default Scope for Client Auth
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: Default Scope for Client Auth
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Profile
+definitions:
+  Request:
+    type: object
+    properties:
+      email:
+        format: string
+        example: BBB@163.com
+      language:
+        format: string
+        example: en
+      remarks:
+        type: string
+        example: hakjfdsa dajh
+      additionalDetails:
+        items:
+          $ref: '#/definitions/additionalObject'
+  DeleteRequest:
+    type: object
+    properties:
+      msisdn:
+        format: string
+        example: "92324334323232"
+      dataType:
+        format: string
+        example: profile | devices | regattempts
+  Response:
+    type: object
+    properties:
+      msisdn:
+        format: string
+        example: "923801000004"
+      firstName_en:
+        type: string
+        example: Test
+      lastName_en:
+        type: string
+        example: User
+      firstName_ur:
+        type: string
+        example: Test
+      lastName_ur:
+        type: string
+        example: User
+      imageUrl:
+        type: string
+        example: http://imageurl.com
+      email:
+        type: string
+        example: BBB@163.com
+      cnic:
+        type: string
+        example: 12345-911212929-4
+      dob:
+        type: string
+        example: 10-01-1992
+  GetProfile:
+    type: object
+    properties:
+      msisdn:
+        format: string
+        example: "923801000004"
+      firstName_en:
+        type: string
+        example: Test
+      lastName_en:
+        type: string
+        example: User
+      firstName_ur:
+        type: string
+        example: Test
+      lastName_ur:
+        type: string
+        example: User
+      imageUrl:
+        type: string
+        example: http://imageurl.com
+      email:
+        type: string
+        example: BBB@163.com
+      cnic:
+        type: string
+        example: 12345-911212929-4
+      dob:
+        type: string
+        example: 10-01-1992
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+  reportIssue:
+    type: object
+    properties:
+      name:
+        format: string
+        example: Customer Name
+      issueDescription:
+        format: string
+        example: some description
+      issueType:
+        type: string
+        example: device_authentication
+      newDeviceID:
+        type: string
+        example: 123hjhugu556
+      newDeviceType:
+        type: string
+        example: ios
+      accessedTime:
+        type: string
+        example: 24-02-2021T12:31:30
+paths:
+  /rest/api/v1/account/device/delink:
+    post:
+      security:
+      - oauthuser:
+        - user
+      - oauthconsumer:
+        - consumer
+      - oauthmerchant:
+        - merchant
+      tags:
+      - Profile
+      summary: Delink Device
+      description: ""
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      - multipart/form-data
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+  /rest/api/v1/account/report/issue:
+    post:
+      tags:
+      - Profile
+      summary: Report Issue
+      description: ""
+      produces:
+      - application/json
+      consumes:
+      - multipart/form-data
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/reportIssue'
+      responses:
+        "200":
+          description: successful operation
+  /rest/api/v1/account/profile/business/logo:
+    post:
+      security:
+      - Bearer: []
+      tags:
+      - Profile
+      summary: Add Business Logo
+      description: ""
+      produces:
+      - application/json
+      consumes:
+      - multipart/form-data
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: formData
+        name: file
+        type: file
+        description: The file to upload.
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+              data:
+                type: object
+                properties:
+                  businessLogoURL:
+                    type: string
+                    example: f4596eeb-7ff5-4a25-83d4-4b423a6e4267.jpg
+    delete:
+      security:
+      - Bearer: []
+      tags:
+      - Profile
+      summary: Delete Business Logo
+      description: ""
+      produces:
+      - application/json
+      consumes:
+      - multipart/form-data
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+        "401":
+          description: unsuccessful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T35
+              responseMessage_en:
+                type: string
+                example: Failed to get user profile against given msisdn
+              responseMessage_ur:
+                type: string
+                example: Failed to get user profile against given msisdn
+        "402":
+          description: unsuccessful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T01
+              responseMessage_en:
+                type: string
+                example: Unexpected Internal server error
+              responseMessage_ur:
+                type: string
+                example: Unexpected Internal server error
+  /rest/api/v1/account/profile/all:
+    get:
+      security:
+      - Bearer: []
+      tags:
+      - Profile
+      summary: 'Get All Profile data '
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+              data:
+                $ref: '#/definitions/GetProfile'
+        "401":
+          description: ""
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T35
+              responseMessage_en:
+                type: string
+                example: Failed to get user profile against given msisdn
+              responseMessage_ur:
+                type: string
+                example: Failed to get user profile against given msisdn
+        "422":
+          description: ""
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T01
+              responseMessage_en:
+                type: string
+                example: Unexpected Internal server error
+              responseMessage_ur:
+                type: string
+                example: Unexpected Internal server error
+  /rest/api/v1/account/profile/activate:
+    post:
+      security:
+      - Bearer: []
+      tags:
+      - Profile
+      summary: Active a profile
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+        "401":
+          description: ""
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T35
+              responseMessage_en:
+                type: string
+                example: Failed to get user profile against given msisdn
+              responseMessage_ur:
+                type: string
+                example: Failed to get user profile against given msisdn
+        "422":
+          description: ""
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T01
+              responseMessage_en:
+                type: string
+                example: Unexpected Internal server error
+              responseMessage_ur:
+                type: string
+                example: Unexpected Internal server error
+  /rest/api/v1/account/profile/delete:
+    post:
+      security:
+      - Bearer: []
+      tags:
+      - Profile
+      summary: Delete data against a profile
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/DeleteRequest'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+        "401":
+          description: ""
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T35
+              responseMessage_en:
+                type: string
+                example: Failed to get user profile against given msisdn
+              responseMessage_ur:
+                type: string
+                example: Failed to get user profile against given msisdn
+        "422":
+          description: ""
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T01
+              responseMessage_en:
+                type: string
+                example: Unexpected Internal server error
+              responseMessage_ur:
+                type: string
+                example: Unexpected Internal server error
+  /rest/api/v1/account/profile/image:
+    post:
+      security:
+      - Bearer: []
+      tags:
+      - Profile
+      summary: Add Profile Image
+      description: ""
+      produces:
+      - application/json
+      consumes:
+      - multipart/form-data
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: formData
+        name: file
+        type: file
+        description: The file to upload.
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+              data:
+                type: object
+                properties:
+                  profileImageURL:
+                    type: string
+                    example: f4596eeb-7ff5-4a25-83d4-4b423a6e4267.jpg
+    delete:
+      security:
+      - Bearer: []
+      tags:
+      - Profile
+      summary: Delete Profile Image
+      description: ""
+      produces:
+      - application/json
+      consumes:
+      - multipart/form-data
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+        "401":
+          description: unsuccessful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T35
+              responseMessage_en:
+                type: string
+                example: Failed to get user profile against given msisdn
+              responseMessage_ur:
+                type: string
+                example: Failed to get user profile against given msisdn
+        "402":
+          description: unsuccessful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T01
+              responseMessage_en:
+                type: string
+                example: Unexpected Internal server error
+              responseMessage_ur:
+                type: string
+                example: Unexpected Internal server error
+  /rest/api/v1/images/{imageUrl}:
+    get:
+      security:
+      - Bearer: []
+      tags:
+      - Profile
+      summary: Download the image
+      description: ""
+      produces:
+      - image/jpeg
+      consumes:
+      - multipart/form-data
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: path
+        name: imageUrl
+        type: string
+        required: true
+        description: Image Url
+      responses:
+        "200":
+          description: OK
+  /rest/api/v1/account/profile:
+    get:
+      tags:
+      - Profile
+      summary: Get Profile Info
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Failed to get user profile
+      consumes: []
+    post:
+      tags:
+      - Profile
+      summary: Update Email address and language preference of a customer
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/Request'
+      responses:
+        "200":
+          description: successful operation
+      consumes: []

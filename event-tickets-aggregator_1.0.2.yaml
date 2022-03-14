@@ -1,0 +1,790 @@
+swagger: "2.0"
+info:
+  title: Event Tickets - Aggregator
+  x-ibm-name: event-tickets-aggregator
+  version: 1.0.2
+  description: |-
+    JazzCash APIs for Event Tickets
+    Disabling CORS
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://marketplace-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  catalogs: {}
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  cors:
+    enabled: false
+parameters:
+  acceptLanguage:
+    name: Accept-Language
+    description: Describe which language you prefer to get back the response in ,
+      current possible values are "en" or "ur" for English and Urdu
+    in: header
+    type: string
+  appType:
+    name: X-APP-TYPE
+    description: Describes application or device type.
+    in: header
+    required: true
+    type: string
+    enum:
+    - Android
+    - IOS
+    - Web
+  appVersion:
+    name: X-APP-VERSION
+    description: Describes application version 1.0.1.
+    in: header
+    required: true
+    type: string
+  deviceID:
+    name: X-DEVICE-ID
+    description: Describes device ID XDFSD23345435.
+    in: header
+    required: true
+    type: string
+  ipAddress:
+    name: X-IP-ADDRESS
+    description: Describes IP Address of the device.
+    in: header
+    required: true
+    type: string
+  channel:
+    name: X-CHANNEL
+    description: Describes channel code
+    in: header
+    required: true
+    type: string
+    enum:
+    - Third Party
+    - Mobile APP
+    - Backend Portal
+  ibmClientID:
+    name: X-IBM-CLIENT-ID
+    description: Client credentials required for API Connect
+    in: header
+    required: true
+    type: string
+  msisdn:
+    name: X-MSISDN
+    description: Client credentials required for API Connect
+    in: header
+    required: true
+    type: string
+  mPinHeader:
+    name: X-MPIN
+    description: Client credentials required for API Connect
+    in: header
+    required: true
+    type: string
+definitions:
+  eventCitiesRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: array
+        items:
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+  eventBookingsRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: array
+        items:
+          properties:
+            aggregatorId:
+              type: string
+            orderId:
+              type: string
+            event:
+              type: string
+            type:
+              type: string
+              example: Music, Food, Entertainment
+            noOfSeats:
+              type: integer
+              example: 2
+            venue:
+              type: string
+              example: Bagh-e-Jinnah
+            venueLat:
+              type: string
+              example: "37.1234"
+            venueLng:
+              type: string
+              example: "73.1234"
+            venueAddress:
+              type: string
+              example: DHA Lahore
+            eventDate:
+              type: string
+              example: 2020-12-30T00:00:00.000Z
+            eventTime:
+              type: string
+              example: 07:00 PM
+            bookingDate:
+              type: string
+              example: 2020-12-15T00:00:00.000Z
+            bookingAmount:
+              type: string
+              example: "1000"
+            thumbnail:
+              type: string
+            customerName:
+              type: string
+            customerPhone:
+              type: string
+            ticketCode:
+              type: string
+            orderStatus:
+              type: string
+              example: Booked, Pending
+            historyStatus:
+              type: string
+              example: Upcoming, Archived
+            qrCode:
+              type: string
+              example: Base64 representation of the QR Code.
+  initTicketReq:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      totalAmount:
+        type: integer
+  initTicketRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          originatorConversationId:
+            type: string
+            example: 247bad68da0e4edaa0ba7eb4ddf3a9cf
+          conversationId:
+            type: string
+            example: AG_20200730_000049564a4e7f3cfc86
+          transactionId:
+            type: string
+            example: 10710713156
+          transEndDate:
+            type: string
+            example: "20200730"
+          transEndTime:
+            type: string
+            example: "150802"
+          amount:
+            type: integer
+            example: 500
+          fee:
+            type: integer
+            example: 0
+  confirmTicketRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          aggregatorId:
+            type: string
+          bookingId:
+            type: string
+          orderRefNo:
+            type: string
+          netPrice:
+            type: integer
+          amountCharged:
+            type: integer
+          fee:
+            type: integer
+          originatorConversationId:
+            type: string
+            example: 247bad68da0e4edaa0ba7eb4ddf3a9cf
+          conversationId:
+            type: string
+            example: AG_20200730_000049564a4e7f3cfc86
+          transactionId:
+            type: string
+            example: 10710713156
+          transEndDate:
+            type: string
+            example: "20200730"
+          transEndTime:
+            type: string
+            example: "150802"
+          commission:
+            type: string
+  confirmTicketReq:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      transactionId:
+        type: string
+      fee:
+        type: integer
+      tickets:
+        type: integer
+        example: 1
+      eventId:
+        type: string
+      date:
+        type: string
+        example: 2020-12-20T00:00:00.000Z
+      customerName:
+        type: string
+      customerEmail:
+        type: string
+      cnic:
+        type: string
+      address:
+        type: string
+      city:
+        type: string
+      amount:
+        type: integer
+      passes:
+        type: array
+        items:
+          properties:
+            id:
+              type: string
+            priceType:
+              type: string
+              example: Single
+            price:
+              type: string
+              example: "1000"
+            qty:
+              type: string
+              example: "2"
+            totalPrice:
+              type: string
+              example: "1000"
+      claimId:
+        type: integer
+  applyPromoReq:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      promoCode:
+        type: string
+      ticketFare:
+        type: integer
+      totalFare:
+        type: integer
+  applyPromoRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          promoCode:
+            type: string
+          discount:
+            type: integer
+          claimId:
+            type: integer
+  eventSchedulesRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          events:
+            type: array
+            items:
+              $ref: '#/definitions/eventSchedulesArrayRes'
+  eventSchedulesArrayRes:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      eventId:
+        type: string
+      cities:
+        type: array
+        items:
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+      title:
+        type: string
+        example: Pages Unread
+      type:
+        type: string
+        example: Music, Food, Entertainment, Family
+      duration:
+        type: string
+        example: 03:00PM to 08:00PM
+      note:
+        type: string
+        example: Time Slots  03:30 PM and 06:00 PM
+      venue:
+        type: string
+        example: Bagh-e-Jinnah
+      detail:
+        type: string
+        example: 'Detailed “About” section for the event '
+      lat:
+        type: string
+      lng:
+        type: string
+      address:
+        type: string
+        example: DHA Lahore
+      thumbnail:
+        type: string
+        example: Url of thumbnail image
+      banner:
+        type: string
+        example: Url of banner image
+      background:
+        type: string
+        example: Url of background image
+      eventDates:
+        type: array
+        items:
+          type: string
+          example: 2020-12-25T00:00:00.000Z
+      maxTicketsAllowed:
+        type: integer
+        example: 5
+      prices:
+        type: array
+        items:
+          properties:
+            id:
+              type: string
+            priceType:
+              type: string
+              example: Single
+            price:
+              type: string
+              example: "500"
+            discount:
+              type: integer
+              example: 100
+      handlingCharges:
+        type: integer
+        example: 0
+  error400:
+    description: Bad Request
+    type: object
+    title: Bad Request
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T01
+      responseMessage:
+        type: string
+        example: Bad Request
+  error401:
+    type: object
+    title: Unauthorized
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T02
+      responseMessage:
+        type: string
+        example: Authentication Failed
+  error402:
+    type: object
+    title: Timed-out or Failed to submit the transaction to CPS
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T03
+      responseMessage:
+        type: string
+        example: ""
+  error409:
+    type: object
+    title: Conflict
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T06
+      responseMessage:
+        type: string
+        example: Conflict
+  error500:
+    type: object
+    title: Server Error
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T07
+      responseMessage:
+        type: string
+        example: Internal Server Error
+paths:
+  /rest/api/v1/marketplace/aggregator/event/cities:
+    get:
+      summary: Fetch all Event Cities
+      tags:
+      - Event Tickets
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/eventCitiesRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      parameters:
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+  /rest/api/v1/marketplace/aggregator/event/bookings:
+    get:
+      summary: Fetch all Event Bookings
+      tags:
+      - Event Tickets
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/eventBookingsRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      parameters:
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+  /rest/api/v1/marketplace/aggregator/event/schedules:
+    get:
+      summary: Fetch all Event Schedules
+      tags:
+      - Event Tickets
+      parameters:
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/eventSchedulesRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/marketplace/aggregator/event/promocode/apply:
+    post:
+      summary: Apply Promo Code
+      tags:
+      - Event Tickets
+      parameters:
+      - in: body
+        name: body
+        description: Post request body for apply promo code
+        schema:
+          $ref: '#/definitions/applyPromoReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/applyPromoRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/marketplace/aggregator/event/init:
+    post:
+      summary: Init Trans Bus Ticket
+      tags:
+      - Event Tickets
+      parameters:
+      - in: body
+        name: body
+        description: Post request body for init event ticket
+        schema:
+          $ref: '#/definitions/initTicketReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/initTicketRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/marketplace/aggregator/event/confirm:
+    post:
+      summary: Confirm Event Ticket
+      tags:
+      - Event Tickets
+      parameters:
+      - in: body
+        name: body
+        description: Post request body for confirm event ticket
+        schema:
+          $ref: '#/definitions/confirmTicketReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      - $ref: '#/parameters/mPinHeader'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/confirmTicketRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'

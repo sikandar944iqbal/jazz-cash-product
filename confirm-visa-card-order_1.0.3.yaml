@@ -1,0 +1,210 @@
+swagger: "2.0"
+info:
+  title: Confirm visa card order
+  x-ibm-name: confirm-visa-card-order
+  version: 1.0.3
+  description: |
+    This API confirms the visa card order placement
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: Default Scope for Client Auth
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: Default Scope for Client Auth
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: |
+          context.message.header.set('X-META-DATA',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://secure-card-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  activity-log:
+    success-content: payload
+    error-content: payload
+    enabled: true
+  buffering: true
+  cors:
+    enabled: false
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Confirm visa card order
+definitions:
+  Request:
+    type: object
+    properties:
+      cardOrderDetails:
+        type: object
+        properties:
+          category:
+            type: string
+            example: Normal
+          cardID:
+            type: string
+            example: "1"
+          cnic:
+            type: string
+            example: 4220XXXXXXXXX
+          name:
+            type: string
+            example: SAJXX
+          city:
+            type: string
+            example: Lahore
+          deliveryType:
+            type: string
+            example: own_address
+          address:
+            type: string
+            example: house no#12, XXXX
+          nearbBy:
+            type: string
+            example: nearby XXXX
+      remarks:
+        type: string
+        example: sample remarks
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+  Response:
+    type: object
+    properties:
+      status:
+        type: string
+        example: 200
+      message:
+        type: string
+        example: success
+      description:
+        type: string
+        example: Order created successfully
+      orderNo:
+        type: string
+        example: "10493107"
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/debitcard/orderCard/confirmDetails:
+    post:
+      tags:
+      - Confirm visa card order
+      summary: Confirm visa card order
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: encrypted
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Failed to confirm visa card order.
+      consumes: []
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/Request'
+      description: The request body for the operation

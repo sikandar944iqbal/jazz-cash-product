@@ -1,0 +1,437 @@
+swagger: "2.0"
+info:
+  title: QR Payment Customer to Merchant Static / Dynamic / Till Number
+  x-ibm-name: qr-payment-customer-to-merchant-static-dynamic-till-number
+  version: 1.0.4
+  description: Contains APIs For QR Payments Customer to Merchant
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: QR Payment Customer to Merchant Static / Dynamic / Till Number
+definitions:
+  MerchantDetailsRequest:
+    type: object
+    properties:
+      type:
+        type: string
+        example: qrStatic / qrDynamic / tillNumber
+      payload:
+        type: string
+        example: "00001111"
+      remarks:
+        type: string
+        example: sample remarks
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - type
+    - payload
+  MerchantDetailsResponse:
+    type: object
+    properties:
+      merchantMsisdn:
+        type: string
+        example: 3015091700
+      merchantName:
+        type: string
+        example: Al Barkat
+      tillNumber:
+        type: string
+        example: "00001111"
+      merchantRating:
+        type: string
+        example: "4"
+  InitRequest:
+    type: object
+    properties:
+      amount:
+        type: number
+        example: 500
+      receiverMsisdn:
+        type: string
+        example: "923015091633"
+      remarks:
+        type: string
+        example: sample remarks
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - amount
+    - receiverMsisdn
+  InitResponse:
+    type: object
+    properties:
+      originatorConversationID:
+        type: string
+        example: AG_20130129T102103
+      conversationID:
+        type: string
+        example: AG_20130129T102103
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      txEndDate:
+        type: string
+        example: 2004-01-05T00:00:00.000Z
+      txEndTime:
+        type: string
+        example: "03:33:12.943"
+      amount:
+        type: string
+        example: "10.00"
+      fee:
+        type: string
+        example: "0.00"
+  ConfirmRequest:
+    type: object
+    properties:
+      transactionID:
+        type: string
+        example: 10710822000
+      transactionType:
+        type: string
+        example: Closed Loop
+      paidVia:
+        type: string
+        example: Scan from Camera, Scan from gallery, Till Number
+      qrCode:
+        type: string
+        example: Static / Till Number
+      merchantDetails:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923462104357"
+          name:
+            type: string
+            example: Al Barkat.com
+          tillNumber:
+            type: string
+            example: "00000016"
+      remarks:
+        type: string
+        example: sample remarks
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - transactionID
+    - transactionType
+    - paidVia
+    - qrCode
+    - merchantDetails
+  ConfirmResponse:
+    type: object
+    properties:
+      txID:
+        type: string
+        example: 10710822000
+      txType:
+        type: string
+        example: Closed Loop
+      paidVia:
+        type: string
+        example: Scan from Camera, Scan from gallery, Till Number
+      qrCode:
+        type: string
+        example: Static / Till Number
+      msisdn:
+        type: string
+        example: 03xxxxx
+      amount:
+        type: string
+        example: "100"
+      fee:
+        type: string
+        example: "0.00"
+      txEndDate:
+        type: string
+        example: "20140102"
+      txEndTime:
+        type: string
+        example: "210159"
+      contextData:
+        type: object
+        properties:
+          ocvID:
+            type: string
+            example: S_X2013012921001
+          cvID:
+            type: string
+            example: AG_20130129T102103
+          merchantDetails:
+            type: object
+            properties:
+              msisdn:
+                type: string
+                example: "923462104357"
+              name:
+                type: string
+                example: Al Barkat.com
+              tillNumber:
+                type: string
+                example: "00000016"
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/payment/qrpaymentC2B/init:
+    post:
+      tags:
+      - Initiate Customer to Merchant Payment
+      summary: Initiate Customer to Merchant Payment
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/InitRequest'
+      description: The request body for the operation
+  /rest/api/v1/payment/qrpaymentC2B/confirm:
+    post:
+      tags:
+      - Confirm Customer to Merchant Payment
+      summary: Confirm Customer to Merchant Payment
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/ConfirmRequest'
+      description: The request body for the operation
+  /rest/api/v1/payment/qrpayment/merchantdetails:
+    post:
+      tags:
+      - Fetch Merchant Details
+      summary: Fetch Merchant Details
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/MerchantDetailsRequest'
+      description: The request body for the operation

@@ -1,0 +1,531 @@
+swagger: "2.0"
+info:
+  title: E-Vouchers-2
+  x-ibm-name: e-vouchers-2
+  version: 1.0.1
+  description: This APIs related to E-Vouchers
+schemes:
+- http
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://marketplace-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+tags: []
+definitions:
+  missingRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: Amazon
+      value:
+        type: string
+        example: "100"
+      currency:
+        type: string
+        enum:
+        - dollar
+        - rupees
+        example: dollar
+      email:
+        type: string
+        example: maaz@mobilink.net
+      contact:
+        type: string
+        example: 0300-0000456
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - name
+  Request:
+    type: object
+    properties:
+      amount:
+        type: string
+        example: "100"
+      productCode:
+        type: string
+        example: "100"
+      remarks:
+        type: string
+        example: sample remarks
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - productCode
+    - amount
+  Response:
+    type: object
+    properties:
+      conversationID:
+        type: string
+        example: AG_20130129T102103
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      transEndDate:
+        type: string
+        example: 2004-01-05T00:00:00.000Z
+      transEndTime:
+        type: string
+        example: "03:33:12.943"
+      transactionData:
+        type: object
+        properties:
+          deduction:
+            type: number
+            format: double
+            example: "5000.00"
+          commission:
+            type: number
+            format: double
+            example: "867.00"
+          fed:
+            type: number
+            example: 0.5
+          wht:
+            type: number
+            example: 0.3
+          fee:
+            type: number
+            example: 0.7
+          productDetails:
+            type: object
+  getVouchersResponse:
+    type: object
+    properties:
+      agentTransactionId:
+        type: string
+        example: AG_20130129T102103
+      transactionId:
+        type: string
+        example: XD2013012923789234
+      resultCode:
+        type: string
+        example: 2004-01-05T00:00:00.000Z
+      products:
+        type: array
+        items:
+          type: object
+          properties:
+            code:
+              type: string
+              example: TESTFACEBOOK10
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/marketplace/evouchers/vouchers:
+    get:
+      security:
+      - Bearer: []
+      tags:
+      - get e-vouchers
+      summary: get e-vouchers
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: query
+        name: agentTransactionId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Voucher Details fetched Successfully
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: MP-EV-T36
+              responseMessage_en:
+                type: string
+                example: Voucher Details fetched Successfully
+              responseMessage_ur:
+                type: string
+                example: Voucher Details fetched Successfully
+              data:
+                $ref: '#/definitions/getVouchersResponse'
+              additionalDetails:
+                items:
+                  $ref: '#/definitions/additionalObject'
+        "401":
+          description: Authentication Failed
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-EV-T03
+              responseMessage_en:
+                type: string
+                example: Authentication Failed
+              responseMessage_ur:
+                type: string
+                example: Authentication Failed
+        "422":
+          description: Failed to submit the transaction due to missing mandatory parameters.
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-EV-T36
+              responseMessage_en:
+                type: string
+                example: Failed to submit the transaction due to missing mandatory
+                  parameters.
+              responseMessage_ur:
+                type: string
+                example: Failed to submit the transaction due to missing mandatory
+                  parameters.
+  /rest/api/v1/marketplace/evouchers/confirm:
+    post:
+      security:
+      - Bearer: []
+      tags:
+      - ' e-voucher payment'
+      summary: Confirm  e-voucher payment
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: header
+        name: X-MPIN
+        required: true
+        type: string
+        description: encrypted
+      responses:
+        "200":
+          description: Voucher Payment done Successfully
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: MP-EV-T36
+              responseMessage_en:
+                type: string
+                example: Voucher Payment done Successfully
+              responseMessage_ur:
+                type: string
+                example: Voucher Payment done Successfully
+              data:
+                $ref: '#/definitions/Response'
+              additionalDetails:
+                items:
+                  $ref: '#/definitions/additionalObject'
+        "401":
+          description: Authentication Failed
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-EV-T03
+              responseMessage_en:
+                type: string
+                example: Authentication Failed
+              responseMessage_ur:
+                type: string
+                example: Authentication Failed
+        "422":
+          description: Failed to submit the transaction due to missing mandatory parameters.
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-EV-T36
+              responseMessage_en:
+                type: string
+                example: Failed to submit the transaction due to missing mandatory
+                  parameters.
+              responseMessage_ur:
+                type: string
+                example: Failed to submit the transaction due to missing mandatory
+                  parameters.
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/Request'
+      description: The request body for the operation
+  /rest/api/v1/marketplace/evouchers/request:
+    post:
+      security:
+      - Bearer: []
+      tags:
+      - ' e-voucher missing request'
+      summary: e-voucher missing request
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Voucher Payment done Successfully
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: MP-EV-T36
+              responseMessage_en:
+                type: string
+                example: Thank you!, we have noted down your request
+              responseMessage_ur:
+                type: string
+                example: Thank you!, we have noted down your request
+              data:
+                type: object
+              additionalDetails:
+                items:
+                  $ref: '#/definitions/additionalObject'
+        "401":
+          description: Authentication Failed
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-EV-T03
+              responseMessage_en:
+                type: string
+                example: Authentication Failed
+              responseMessage_ur:
+                type: string
+                example: Authentication Failed
+        "422":
+          description: Failed to submit the transaction due to missing mandatory parameters.
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-EV-T36
+              responseMessage_en:
+                type: string
+                example: Failed to submit the transaction due to missing mandatory
+                  parameters.
+              responseMessage_ur:
+                type: string
+                example: Failed to submit the transaction due to missing mandatory
+                  parameters.
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/missingRequest'
+      description: The request body for the operation

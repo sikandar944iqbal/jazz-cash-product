@@ -1,0 +1,1692 @@
+swagger: "2.0"
+info:
+  title: Merchant Onboarding
+  x-ibm-name: merchant-onboarding
+  version: 1.0.5
+  description: |-
+    Those apis related to merchant onboarding
+    Disabling CORS.
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthuser:
+  - user
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthuser:
+    type: oauth2
+    flow: application
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      user: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    success-content: header
+    error-content: header
+    enabled: true
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  buffering: false
+  cors:
+    enabled: false
+definitions:
+  merchantNotificaiton_request:
+    type: object
+    properties:
+      merchantId:
+        type: string
+        example: "12345"
+      merchantRequestId:
+        type: string
+        example: "12345"
+      msisdn:
+        type: string
+        example: 30059876000
+      status:
+        type: string
+        example: Discrepant
+      Message:
+        type: string
+        example: fields are marked discrepent
+      discripantvalues:
+        type: array
+        items:
+          type: object
+        example:
+        - field: "12"
+          reason: marked discrepant
+        - field: "18"
+          reason: marked discrepant
+  200_merchantNotificaiton:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T101
+      responseMessage:
+        type: string
+        example: merchant notificaiton transcation was completed successfully
+      data:
+        type: object
+        properties:
+          merchantId:
+            type: string
+            example: "12345"
+          merchantRequestId:
+            type: string
+            example: "12345"
+          msisdn:
+            type: string
+            example: "12345"
+          status:
+            type: string
+            example: "12345"
+          Message:
+            type: string
+            example: "12345"
+          discripantvalues:
+            type: array
+            items:
+              type: object
+            example:
+            - field: "12"
+              reason: mark discrepant
+            - field: "18"
+              reason: mark discrepant
+  init_request:
+    type: object
+    properties:
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_normalRegister:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T32
+      responseMessage:
+        type: string
+        example: request for registration process is initiated
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005067512"
+          otpType:
+            type: string
+            example: sms
+          next:
+            type: string
+            example: merchant/otp/verify
+  200_registerDevice:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T41
+      responseMessage:
+        type: string
+        example: User already registered, device registration started
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005067512"
+          cnic:
+            type: string
+            example: "2123242512529"
+          next:
+            type: string
+            example: /merchant/device/register
+          mpinStatus:
+            type: string
+            example: "9"
+          otpType:
+            type: string
+            example: sms
+  200_registerUSSD:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T33
+      responseMessage:
+        type: string
+        example: User partially registered, USSD registration started
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005067512"
+          mpinStatus:
+            type: string
+            example: "1"
+          level:
+            type: string
+            example: M0
+          otpType:
+            type: string
+            example: sms
+          next:
+            type: string
+            example: /merchant/ussd/verify
+  200_unregisterPending:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: ""
+      responseMessage:
+        type: string
+        example: Your merchant request is in process, device registration required
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005067512"
+          otpType:
+            type: string
+            example: sms
+          next:
+            type: string
+            example: pending
+  200_registerPending:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: ""
+      responseMessage:
+        type: string
+        example: Your merchant request is already under process
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005067512"
+          next:
+            type: string
+            example: pending
+  otpVerify_request:
+    type: object
+    properties:
+      otp:
+        type: string
+        example: "1234"
+      otpType:
+        type: string
+        example: sms
+      pushID:
+        type: string
+        example: jhy76765ggftr6t9ejkhy76
+      mixpanelID:
+        type: string
+        example: VHbySOKSrO11e7qFV
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_otpVerified:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T38
+      responseMessage:
+        type: string
+        example: Device registered successfully
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005067512"
+          cnicCRM:
+            type: string
+            example: "678643219870"
+          isJazzCustomer:
+            type: boolean
+            example: true
+          next:
+            type: string
+            example: /merchant/profile
+  emailVerify_request:
+    type: object
+    properties:
+      otp:
+        type: string
+        example: "1234"
+      otpType:
+        type: string
+        example: email
+      email:
+        type: string
+        example: abc@gmail.com
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_emailVerified:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T80
+      responseMessage:
+        type: string
+        example: 'Request for your registration submit successfully, after verification
+          your account will created '
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005066526"
+          cnic:
+            type: string
+            example: "3740578965423"
+          next:
+            example: completed
+  profileRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: Asim Mehmood
+      cnic:
+        type: string
+        example: "2123242512529"
+      cnicIssueDate:
+        type: string
+        example: 25-10-2025
+      cnicCRM:
+        type: string
+        example: "678643219870"
+      isJazzCustomer:
+        type: boolean
+        example: true
+      cnicFrontUrl:
+        type: string
+        example: www.doc.com/doc/1.jpg
+      cnicBackUrl:
+        type: string
+        example: www.doc.com/doc/2.jpg
+      selfieUrl:
+        type: string
+        example: www.doc.com/doc/3.jpg
+      pushID:
+        type: string
+        example: VHbySOKSrO11e7qF:FCLV
+      mixpanelID:
+        type: string
+        example: VHbySOKSrO11e7qF786:FCLV
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+          key2:
+            type: string
+            example: value
+  200_profileResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T76
+      responseMessage:
+        type: string
+        example: Personal info stored successfully
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005066526"
+          next:
+            type: string
+            example: /merchant/bvs/register || /merchant/manual/register
+  bvsRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: Asim Mehmood
+      cnic:
+        type: string
+        example: "2123242512529"
+      cnicIssueDate:
+        type: string
+        example: 25-10-2025
+      fingerPrint:
+        type: string
+        example: kjuyt12hgfv4b2v
+      fingerprintScore:
+        type: integer
+        example: 4
+      fingerprintType:
+        type: integer
+        example: 2
+      fingerprints:
+        type: array
+        items:
+          type: object
+        example:
+        - fingerprintIndex: 2
+          fingerprintData: /6D/qAB6TklTVggM
+        - fingerprintIndex: 3
+          fingerprintData: /6D/qAB6TklTVggM
+        - fingerprintIndex: 4
+          fingerprintData: /6D/qAB6TklTVggM
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+          key2:
+            type: string
+            example: value
+  200_bvsResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T79
+      responseMessage:
+        type: string
+        example: Customer biometric  verification successfull
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005066526"
+          next:
+            type: string
+            example: /merchant/business/register
+  manualRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: Asim Mehmood
+      cnic:
+        type: string
+        example: "2123242512529"
+      cnicIssueDate:
+        type: string
+        example: 2020-10-11T00:00:00.000Z
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+          key2:
+            type: string
+            example: value
+  200_manualResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T40
+      responseMessage:
+        type: string
+        example: Identity verification required for merchant registration
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005066526"
+          cnic:
+            type: string
+            example: "3740578965423"
+          question1:
+            type: string
+            example: Chosse your mother's maiden name
+          optionsMotherMaiden:
+            type: array
+            items:
+              type: string
+              example: islamabad
+          question2:
+            type: string
+            example: 'Choose your please of birth '
+          optionsBirthPlace:
+            type: array
+            items:
+              type: string
+          next:
+            example: /merchant/identity/verification
+  identityQuestionsRequest:
+    type: object
+    properties:
+      cnic:
+        type: string
+        example: "2123242512529"
+      motherMaidenAnswer:
+        type: string
+        example: Amina Khan
+      placeOfBirthAnswer:
+        type: string
+        example: islamabad
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+          key2:
+            type: string
+            example: value
+  200_identityQuestionsResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T40
+      responseMessage:
+        type: string
+        example: Customer verified successfully
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005066526"
+          next:
+            type: string
+            example: /merchant/business/register
+  businessRegRequest:
+    type: object
+    properties:
+      businessName:
+        type: string
+        example: Alsafa Traders
+      merchantType:
+        type: string
+        example: Whole Saler
+      merchantCode:
+        type: string
+        example: "7999"
+      expactedMonthlyIncome:
+        type: string
+        example: "100000"
+      businessAddress:
+        type: string
+        example: I-10 Markaz
+      nearestLandmark:
+        type: string
+        example: I-10
+      businessCity:
+        type: string
+        example: Islamabad
+      businessEmail:
+        type: string
+        example: alsafa@gmail.com
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+          key2:
+            type: string
+            example: value
+  200_businessRegResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T80
+      responseMessage:
+        type: string
+        example: 'Request for your registration submit successfully, after verification
+          your account will created '
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005066526"
+          cnic:
+            type: string
+            example: "3740578965423"
+          next:
+            example: completed
+  200_businessRegEmailResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T90
+      responseMessage:
+        type: string
+        example: 'Request for your registration submit successfully, need email verification '
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005066526"
+          otpType:
+            type: string
+            example: email
+          next:
+            example: /merchant/email/verify
+  VerifyOTPDeviceRegReq:
+    type: object
+    properties:
+      otpType:
+        type: string
+        example: sms
+      otp:
+        type: string
+        example: uskWJtwKdd
+      mpinStatus:
+        type: string
+        example: "3"
+      pushID:
+        type: string
+        example: 212322ads
+      mixpanelID:
+        type: string
+        example: VHbySOKSrO11e7qFV
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_registerDeviceLogin:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T38
+      responseMessage:
+        type: string
+        example: Device registered successfully
+      data:
+        type: object
+        properties:
+          next:
+            type: string
+            example: /login
+  200_registerDeviceMpinChange:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T38
+      responseMessage:
+        type: string
+        example: Device registered successfully
+      data:
+        type: object
+        properties:
+          next:
+            type: string
+            example: /mpin/change
+  200_registerDeviceMpinReset:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T38
+      responseMessage:
+        type: string
+        example: Device registered successfully
+      data:
+        type: object
+        properties:
+          next:
+            type: string
+            example: /mpin/reset
+  200_registerDeviceMpinCreate:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T38
+      responseMessage:
+        type: string
+        example: Device registered successfully
+      data:
+        type: object
+        properties:
+          next:
+            type: string
+            example: /mpin/create
+  ussdVerify_req:
+    type: object
+    properties:
+      otpType:
+        type: string
+        example: sms/email
+      otp:
+        type: string
+        example: uskWJtwKdd
+      pushID:
+        type: string
+        example: ySOKSrO11e7qF:FCLV
+      mixpanelID:
+        type: string
+        example: VHbySOKSrO11e7qFV
+      level:
+        type: string
+        example: l0
+      mpinStatus:
+        type: string
+        example: "1"
+      cnicCPS:
+        type: string
+        example: "322121121212"
+        description: In iOS case only when you verify email
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_ussdVerifyLogin:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T37
+      responseMessage:
+        type: string
+        example: ussd registration successfull
+      data:
+        type: object
+        properties:
+          next:
+            type: string
+            example: /login
+  200_ussdVerifyMpinChange:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T37
+      responseMessage:
+        type: string
+        example: ussd registration successfull
+      data:
+        type: object
+        properties:
+          next:
+            type: string
+            example: /mpin/change
+  200_ussdVerifyMpinReset:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T37
+      responseMessage:
+        type: string
+        example: ussd registration successfull
+      data:
+        type: object
+        properties:
+          next:
+            type: string
+            example: /mpin/reset
+  200_ussdVerifyMpinCreate:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-MREG-T37
+      responseMessage:
+        type: string
+        example: USSD registration successfull
+      data:
+        type: object
+        properties:
+          next:
+            type: string
+            example: /mpin/create
+paths:
+  /rest/api/v1/registration/merchant/notification:
+    post:
+      tags:
+      - merchant notification
+      operationId: merchatnNotification
+      description: merchant notification
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/merchantNotificaiton_request'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_merchantNotificaiton'
+  /rest/api/v1/registration/merchant/discrepancy/remove:
+    post:
+      tags:
+      - Remove Discrepancy
+      operationId: removeDiscrepancy
+      description: remove discrepancy process
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: header
+        name: X-ENV
+        required: false
+        type: string
+        enum:
+        - dev
+        - prod
+        - staging
+        - debug
+      responses:
+        "200":
+          description: 'code: 200'
+  /rest/api/v1/registration/merchant/business/register:
+    post:
+      tags:
+      - Normal Registration
+      operationId: businessReg
+      description: Get identity questions
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-DEVICE-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/businessRegRequest'
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_businessRegResponse'
+        "201":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_businessRegEmailResponse'
+  /rest/api/v1/registration/merchant/email/verify:
+    post:
+      tags:
+      - Normal Registration
+      operationId: verifyEmail
+      description: verify email OTP
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/emailVerify_request'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_emailVerified'
+  /rest/api/v1/registration/merchant/identity/verification:
+    post:
+      tags:
+      - Normal Registration
+      operationId: identityQuestions
+      description: Get identity questions
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-DEVICE-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/identityQuestionsRequest'
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_identityQuestionsResponse'
+  /rest/api/v1/registration/merchant/manual/register:
+    post:
+      tags:
+      - Normal Registration
+      operationId: manual
+      description: Manual verification
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-DEVICE-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/manualRequest'
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_manualResponse'
+  /rest/api/v1/registration/merchant/bvs/register:
+    post:
+      tags:
+      - Normal Registration
+      operationId: bvs
+      description: Biometric verification story
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-DEVICE-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/bvsRequest'
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_bvsResponse'
+  /rest/api/v1/registration/merchant/profile:
+    post:
+      tags:
+      - Normal Registration
+      operationId: profile
+      description: Store personal info
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-DEVICE-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/profileRequest'
+      responses:
+        "200":
+          description: 'code: 200, store personal info case'
+          schema:
+            $ref: '#/definitions/200_profileResponse'
+  /rest/api/v1/registration/merchant/init:
+    post:
+      tags:
+      - Normal Registration
+      operationId: initRegistration
+      description: initiate Registration process
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: header
+        name: X-ENV
+        required: false
+        type: string
+        enum:
+        - dev
+        - prod
+        - staging
+        - debug
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/init_request'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_normalRegister'
+        "201":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_registerDevice'
+        "202":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_registerUSSD'
+        "203":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_unregisterPending'
+        "204":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_registerPending'
+  /rest/api/v1/registration/merchant/otp/verify:
+    post:
+      tags:
+      - Normal Registration
+      operationId: verifyOTP
+      description: verify sms OTP
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/otpVerify_request'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_otpVerified'
+  /rest/api/v1/registration/merchant/device/register:
+    post:
+      tags:
+      - Device Registration
+      description: Device Registration
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/VerifyOTPDeviceRegReq'
+        description: The request body for the operation
+        required: true
+      responses:
+        "210":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_registerDeviceLogin'
+        "211":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_registerDeviceMpinChange'
+        "212":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_registerDeviceMpinReset'
+        "213":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_registerDeviceMpinCreate'
+  /rest/api/v1/registration/merchant/ussd/verify:
+    post:
+      tags:
+      - USSD
+      description: Verify SMS/Email OTP
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/ussdVerify_req'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/200_ussdVerifyLogin'
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/200_ussdVerifyMpinChange'
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/200_ussdVerifyMpinReset'
+        "203":
+          description: ""
+          schema:
+            $ref: '#/definitions/200_ussdVerifyMpinCreate'

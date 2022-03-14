@@ -1,0 +1,3437 @@
+swagger: "2.0"
+info:
+  title: Payment And Transaction APIs
+  x-ibm-name: payment-and-transaction-apis
+  version: 1.0.5
+  description: |-
+    Payment And Transaction APIs
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: false
+definitions:
+  accepttermandconditionReqBody:
+    type: object
+    properties:
+      acceptedTerms&Conditions:
+        type: boolean
+        example: true | false
+  addTaxPresetReqBody:
+    type: object
+    properties:
+      isDefaultPreset:
+        type: boolean
+        example: true | false
+      description:
+        type: string
+        example: 17% value added Tax
+      taxcatagory:
+        type: string
+        example: Percent / Flat
+      taxvalue:
+        type: string
+        example: 17
+  getTaxPresetReqBody:
+    type: object
+    properties:
+      MSISD:
+        type: string
+        example: 92 311 123 1234
+  getTaxPresetDetailsReqBody:
+    type: object
+    properties:
+      taxpresetID:
+        type: string
+        example: 1231231231231
+  TaxPresentDetails:
+    type: object
+    properties:
+      MSISDN:
+        type: string
+        example: 92 311 123 1234
+      taxpresetID:
+        type: string
+        example: 1231231231231
+      Description:
+        type: string
+        example: 17 value added tax
+      taxpresetCatagory:
+        type: string
+        example: Flat | Percent
+      taxpresetvalue:
+        type: string
+        example: 17
+  taxPresetDetailResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+      data:
+        $ref: '#/definitions/TaxPresentDetails'
+  taxPresetListResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TaxPresentDetails'
+  genericSuccessResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+  addDiscountPresetBody:
+    type: object
+    properties:
+      isDefaultPreset:
+        type: boolean
+        example: true | false
+      description:
+        type: string
+        example: 17% value added Tax
+      discountcatagory:
+        type: string
+        example: Percentage/Flat
+      discountvalue:
+        type: string
+        example: 1000
+  getDiscountPresetBody:
+    type: object
+    properties:
+      description:
+        type: string
+        example: lorem ipsum
+      discountValue:
+        type: number
+        example: 100
+  getDiscountPresetDetails:
+    type: object
+    properties:
+      MSISDN:
+        type: string
+        example: 92 311 123 1234
+      taxpresetID:
+        type: string
+        example: 1231231231231
+  getDiscountPresetDetailsReqBody:
+    type: object
+    properties:
+      discountpresetID:
+        type: string
+        example: 1231231231231
+  DiscountPresetDetails:
+    type: object
+    properties:
+      discountpresetID:
+        type: string
+        example: 1231231231231
+      Description:
+        type: string
+        example: 17 value added tax
+      discountpresetCatagory:
+        type: string
+        example: Flat | Percentage
+      discountpresetvalue:
+        type: string
+        example: 17
+  discountPresetResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+      data:
+        $ref: '#/definitions/DiscountPresetDetails'
+  discountPresetListResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/DiscountPresetDetails'
+  addShippingPresetBody:
+    type: object
+    properties:
+      isDefaultPreset:
+        type: boolean
+        example: true | false
+      description:
+        type: string
+        example: 17% value added Tax
+      shippingCharges:
+        type: number
+        example: 1000
+  getShippingPresetReqBody:
+    type: object
+    properties:
+      MSISDN:
+        type: string
+        example: 92 311 123 1234
+  getShippingPresetDetailsReqBody:
+    type: object
+    properties:
+      shippingpresetID:
+        type: string
+        example: 1231231231231
+  ShippingPresetDetails:
+    type: object
+    properties:
+      shippingpresetID:
+        type: string
+        example: 1231231231231
+      description:
+        type: string
+        example: 17 value added tax
+      shippingCharges:
+        type: string
+        example: 17
+  shippingPresetResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+      data:
+        $ref: '#/definitions/ShippingPresetDetails'
+  shippingPresetListResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/ShippingPresetDetails'
+  addInvoiceNoteBody:
+    type: object
+    properties:
+      notes:
+        type: string
+        example: This is a Sample Note
+  invoiceNoteDetails:
+    type: object
+    properties:
+      MSISDN:
+        type: string
+        example: 92 311 123 1234
+      notes:
+        type: string
+        example: This is a Sample Note
+      category:
+        type: string
+        example: blanket
+  invoiceNoteResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+      data:
+        $ref: '#/definitions/invoiceNoteDetails'
+  addAdvancedSettingsBody:
+    type: object
+    properties:
+      category:
+        type: string
+        example: Blanket | Item-wise
+  advancedSettingsDetails:
+    type: object
+    properties:
+      MSISDN:
+        type: string
+        example: 92 311 123 1234
+      category:
+        type: string
+        example: Blanket | Item-wise
+      notes:
+        type: string
+        example: This is a Sample Note
+  advancedSettingsResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PT-RTP-T04
+      message_en:
+        type: string
+        example: Request successful
+      message_ur:
+        type: string
+        example: درخواست کامیاب
+      data:
+        $ref: '#/definitions/advancedSettingsDetails'
+  error400:
+    description: Bad Request
+    type: object
+    title: Bad Request
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: PT-RTP-T01
+      responseMessage:
+        type: string
+        example: Bad Request
+  error401:
+    type: object
+    title: Unauthorized
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T02
+      responseMessage:
+        type: string
+        example: Authentication Failed
+  error402:
+    type: object
+    title: Timed-ou or Failed to submit the transaction to CPS
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T03
+      responseMessage:
+        type: string
+        example: ""
+  error409:
+    type: object
+    title: Conflict
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T06
+      responseMessage:
+        type: string
+        example: Conflict
+  error500:
+    type: object
+    title: Server Error
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T07
+      responseMessage:
+        type: string
+        example: Internal Server Error
+  MerchantDetailsResponse:
+    type: object
+    properties:
+      merchantMsisdn:
+        type: string
+        example: 3015091700
+      merchantName:
+        type: string
+        example: Al Barkat
+      tillNumber:
+        type: string
+        example: "00001111"
+      merchantRating:
+        type: string
+        example: "4"
+  quickPayRequest:
+    type: object
+    properties:
+      invoiceID:
+        type: string
+        example: 123
+      invoiceType:
+        type: string
+        example: quickpay
+        enum:
+        - quickPay
+      txID:
+        type: string
+        example: 123xyz
+      price:
+        type: number
+        example: 1
+      attachment:
+        type: object
+        example: test.jpg
+        description: Multipart File Object
+      description:
+        type: string
+        example: Nido Fortigro
+      status:
+        type: string
+        example: approved
+        enum:
+        - Completed
+        - Rejected
+        - Received
+        - Delayed
+      reminders:
+        type: number
+        example: 0
+      recepientDetails:
+        type: object
+        properties:
+          phoneNo:
+            type: string
+            example: "923462104357"
+          email:
+            type: string
+            example: example@gmail.com
+    required:
+    - attachment
+    - recepientDetails
+    - invoiceID
+    - invoiceType
+  quickPayResponse:
+    type: object
+    properties:
+      invoiceID:
+        type: string
+        example: 123
+      invoiceType:
+        type: string
+        example: quickPay
+      txID:
+        type: string
+        example: 123xys
+      price:
+        type: string
+        example: 1
+      attachment:
+        type: object
+        example: test.jpg
+        description: abc.jpg
+      description:
+        type: string
+        example: Nido Fortigro
+      status:
+        type: string
+        example: approved
+        enum:
+        - Completed
+        - Rejected
+        - Received
+        - Delayed
+      reminders:
+        type: number
+        example: 0
+      recepientDetails:
+        type: object
+        properties:
+          phoneNo:
+            type: string
+            example: "923462104357"
+          email:
+            type: string
+            example: example@gmail.com
+  invoiceRequest:
+    type: object
+    properties:
+      invoiceID:
+        type: string
+        example: 1123abc
+      invoiceType:
+        type: string
+        example: requestInvoice
+        enum:
+        - requestInvoice
+      txID:
+        type: string
+        example: 123abc
+      createdDate:
+        type: string
+        example: 01-01-2020
+      dueDate:
+        type: string
+        example: 01-01-2020
+      status:
+        type: string
+        example: approved
+        enum:
+        - Completed
+        - Rejected
+        - Received
+        - Delayed
+      reminders:
+        type: number
+        example: 0
+      shipping:
+        type: object
+        properties:
+          description:
+            type: string
+            example: Shipping
+          type:
+            type: string
+            example: Flat
+          amount:
+            type: number
+            example: 500
+      attachment:
+        type: object
+        example: test.jpg
+        description: Multipart File Object
+      items:
+        items:
+          properties:
+            description:
+              type: string
+              example: Nido Fortigro
+            price:
+              type: number
+              example: 1
+            amount:
+              type: number
+              example: 500
+            tax:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: Shipping
+                type:
+                  type: string
+                  example: Federal Excise Duty
+                  enum:
+                  - Percentage
+                  - Flat
+                amount:
+                  type: number
+                  example: 500
+            discount:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: 10% Discount
+                type:
+                  type: string
+                  example: Federal Excise Duty
+                  enum:
+                  - Percentage
+                  - Flat
+                amount:
+                  type: number
+                  example: 500
+      recepientDetails:
+        type: object
+        properties:
+          name:
+            type: string
+            example: Ali Ahmed
+          phoneNo:
+            type: string
+            example: "923462104357"
+          email:
+            type: string
+            example: example@gmail.com
+    required:
+    - invoiceID
+    - createdDate
+    - dueDate
+    - shipping
+    - items
+    - recepientDetails
+  invoiceResponse:
+    type: object
+    properties:
+      invoiceID:
+        type: string
+        example: 1123abc
+      invoiceType:
+        type: string
+        example: requestInvoice
+        enum:
+        - requestInvoice
+      txID:
+        type: string
+        example: 123abc
+      createdDate:
+        type: string
+        example: 01-01-2020
+      dueDate:
+        type: string
+        example: 01-01-2020
+      status:
+        type: string
+        example: approved
+        enum:
+        - Completed
+        - Rejected
+        - Received
+        - Delayed
+      reminders:
+        type: number
+        example: 0
+      shipping:
+        type: object
+        properties:
+          description:
+            type: string
+            example: Shipping
+          type:
+            type: string
+            example: Flat
+          amount:
+            type: number
+            example: 500
+      attachment:
+        type: object
+        example: test.jpg
+        description: Multipart File Object
+      items:
+        items:
+          properties:
+            description:
+              type: string
+              example: Nido Fortigro
+            price:
+              type: number
+              example: 1
+            amount:
+              type: number
+              example: 500
+            tax:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: Shipping
+                type:
+                  type: string
+                  example: Federal Excise Duty
+                  enum:
+                  - Percentage
+                  - Flat
+                amount:
+                  type: number
+                  example: 500
+            discount:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: 10% Discount
+                type:
+                  type: string
+                  example: Federal Excise Duty
+                  enum:
+                  - Percentage
+                  - Flat
+                amount:
+                  type: number
+                  example: 500
+  deleteRequest:
+    type: object
+    properties:
+      invoiceID:
+        type: string
+        example: INV123
+      invoiceType:
+        type: string
+        example: requestToPay
+        enum:
+        - requestToPay
+        - quickpay
+    required:
+    - invoiceID
+  remindRequest:
+    type: object
+    properties:
+      invoiceID:
+        type: string
+        example: 1123abc
+      reminders:
+        type: number
+        example: 0
+      invoiceType:
+        type: string
+        example: 1123abc
+        enum:
+        - invoiceType
+        - quickPay
+      recepientDetails:
+        type: object
+        properties:
+          phoneNo:
+            type: number
+            example: 459616921
+          email:
+            type: string
+            example: email@gmail.com
+  requestExtensionRequest:
+    type: object
+    properties:
+      invoiceID:
+        type: string
+        example: 1123abc
+      noOfDays:
+        type: number
+        example: 0
+      recepientDetails:
+        type: object
+        properties:
+          phoneNo:
+            type: number
+            example: 459616921
+          email:
+            type: string
+            example: email@gmail.com
+  merchantPaymentInitRequest:
+    type: object
+    properties:
+      amount:
+        type: number
+        example: 10
+      identifier:
+        type: number
+        example: 923001231212
+      identifierType:
+        type: number
+        example: 1
+  merchantPaymentInitResponse:
+    type: object
+    properties:
+      originatorConversationID:
+        type: string
+        example: d318b7a663e848e2b84c276b318f3480
+      transactionID:
+        type: number
+        example: 10711000000
+      conversationID:
+        type: string
+        example: AG_20201027_000070e5e3e0125d1f82
+      txEndDate:
+        type: number
+        example: 20201026
+      txEndTime:
+        type: number
+        example: 20201026
+      amount:
+        type: number
+        example: 10
+      fee:
+        type: number
+        example: 0
+  merchantPaymentConfirmRequest:
+    type: object
+    properties:
+      transactionID:
+        type: number
+        example: 10710999000
+      useCase:
+        type: number
+        example: Resquest2Pay
+  merchantPaymentConfirmResponse:
+    type: object
+    properties:
+      txID:
+        type: number
+        example: 10711000000
+      txType:
+        type: string
+        example: Resquest2Pay
+      txEndDate:
+        type: number
+        example: 20201026
+      txEndTime:
+        type: number
+        example: 20201026
+      amount:
+        type: number
+        example: 20
+      fee:
+        type: number
+        example: 0
+      contextData:
+        type: object
+        properties:
+          ocvID:
+            type: string
+            example: de1e9ea15f284373963e104fb1e376c2
+          cvID:
+            type: string
+            example: AG_20201027_000058b5a9d58c7befc0
+  uploadAttachmentRequest:
+    type: object
+    properties:
+      attachment:
+        type: object
+        example: test.jpg
+        description: Multipart file object
+  requestToPayResponse:
+    properties:
+      created:
+        items:
+          type: object
+          properties:
+            invoiceID:
+              type: string
+              example: 1123abc
+            invoiceType:
+              type: string
+              example: requestInvoice
+              enum:
+              - requestInvoice
+            txID:
+              type: string
+              example: 123abc
+            createdDate:
+              type: string
+              example: 01-01-2020
+            dueDate:
+              type: string
+              example: 01-01-2020
+            status:
+              type: string
+              example: approved
+              enum:
+              - Completed
+              - Rejected
+              - Received
+              - Delayed
+            reminders:
+              type: number
+              example: 0
+            shipping:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: Shipping
+                type:
+                  type: string
+                  example: Flat
+                amount:
+                  type: number
+                  example: 500
+            attachment:
+              type: object
+              example: test.jpg
+              description: Multipart File Object
+            items:
+              items:
+                properties:
+                  description:
+                    type: string
+                    example: Nido Fortigro
+                  price:
+                    type: number
+                    example: 1
+                  amount:
+                    type: number
+                    example: 500
+                  tax:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                        example: Shipping
+                      type:
+                        type: string
+                        example: Federal Excise Duty
+                        enum:
+                        - Percentage
+                        - Flat
+                      amount:
+                        type: number
+                        example: 500
+                  discount:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                        example: 10% Discount
+                      type:
+                        type: string
+                        example: Federal Excise Duty
+                        enum:
+                        - Percentage
+                        - Flat
+                      amount:
+                        type: number
+                        example: 500
+      received:
+        items:
+          type: object
+          properties:
+            invoiceID:
+              type: string
+              example: 1123abc
+            invoiceType:
+              type: string
+              example: requestInvoice
+              enum:
+              - requestInvoice
+            txID:
+              type: string
+              example: 123abc
+            createdDate:
+              type: string
+              example: 01-01-2020
+            dueDate:
+              type: string
+              example: 01-01-2020
+            status:
+              type: string
+              example: approved
+              enum:
+              - Completed
+              - Rejected
+              - Received
+              - Delayed
+            reminders:
+              type: number
+              example: 0
+            shipping:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: Shipping
+                type:
+                  type: string
+                  example: Flat
+                amount:
+                  type: number
+                  example: 500
+            attachment:
+              type: object
+              example: test.jpg
+              description: Multipart File Object
+            items:
+              items:
+                properties:
+                  description:
+                    type: string
+                    example: Nido Fortigro
+                  price:
+                    type: number
+                    example: 1
+                  amount:
+                    type: number
+                    example: 500
+                  tax:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                        example: Shipping
+                      type:
+                        type: string
+                        example: Federal Excise Duty
+                        enum:
+                        - Percentage
+                        - Flat
+                      amount:
+                        type: number
+                        example: 500
+                  discount:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                        example: 10% Discount
+                      type:
+                        type: string
+                        example: Federal Excise Duty
+                        enum:
+                        - Percentage
+                        - Flat
+                      amount:
+                        type: number
+                        example: 500
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/requesttopay/uploadAttachment:
+    post:
+      tags:
+      - Request To Pay
+      summary: Request to pay via quickpay
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: Content-Type
+        in: header
+        required: true
+        description: multipart/form-data
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: false
+        description: File to be uploaded
+        schema:
+          $ref: '#/definitions/uploadAttachmentRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+  /rest/api/v1/requesttopay/getRequests:
+    get:
+      tags:
+      - Request To Pay
+      summary: Request To Pay via invoice
+      description: Request To Pay via invoice
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+  /rest/api/v1/requesttopay/remind:
+    post:
+      tags:
+      - Request To Pay
+      summary: Request to pay via quickpay
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/remindRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+  /rest/api/v1/requesttopay/delete:
+    post:
+      tags:
+      - Request To Pay
+      summary: Request to pay via invoice
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/deleteRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+  /rest/api/v1/requesttopay/invoice/requestExtension:
+    post:
+      security: []
+      tags:
+      - Request To Pay
+      summary: Request to pay via quickpay
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/requestExtensionRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+  /rest/api/v1/requesttopay/invoice:
+    post:
+      tags:
+      - Request To Pay
+      summary: Request To Pay via invoice
+      description: Request To Pay via invoice
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/invoiceRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+    put:
+      tags:
+      - Request To Pay
+      summary: Request To Pay via invoice
+      description: Request To Pay via invoice
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/invoiceRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+  /rest/api/v1/requesttopay/quickpay:
+    post:
+      tags:
+      - Request To Pay
+      summary: Request to pay via quickpay
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: false
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/quickPayRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+    put:
+      tags:
+      - Request To Pay
+      summary: Request to pay via quickpay
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: false
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/quickPayRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+  /rest/api/v1/payment/merchantPayment/init:
+    post:
+      tags:
+      - payment
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Add shipping preset information
+        schema:
+          $ref: '#/definitions/merchantPaymentInitRequest'
+      description: endpoint to add shipping present to database
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: MR-PAY-T34
+              message_en:
+                type: string
+                example: Init Trans Customer to Merchant Successful
+              message_ur:
+                type: string
+                example: مرچنٹ کامیاب کرنے init کے ٹرانس کسٹمر
+              data:
+                $ref: '#/definitions/merchantPaymentInitResponse'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/payment/merchantPayment/confirm:
+    post:
+      tags:
+      - payment
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Add shipping preset information
+        schema:
+          $ref: '#/definitions/merchantPaymentConfirmRequest'
+      description: endpoint to add shipping present to database
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: MR-PAY-T34
+              message_en:
+                type: string
+                example: Payment Successful
+              message_ur:
+                type: string
+                example: کامیاب ادائیگی
+              data:
+                $ref: '#/definitions/merchantPaymentConfirmResponse'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/requesttopay/settings/taxpreset/{taxpresetID}:
+    get:
+      tags:
+      - Tax
+      description: return details of give tax preset
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: taxpresetID
+        in: path
+        description: Discount Preset id to get
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/taxPresetDetailResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    put:
+      tags:
+      - Tax
+      description: update existing Tax preset information
+      operationId: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: taxpresetID
+        in: path
+        description: Tax Preset id to be updated
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Post body Add Tax preset
+        schema:
+          $ref: '#/definitions/addTaxPresetReqBody'
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    delete:
+      tags:
+      - Tax
+      description: remove existing tax preset
+      operationId: deleteTaxPreset
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: taxpresetID
+        in: path
+        description: Tax Preset id to delete
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+  /rest/api/v1/requesttopay/settings/taxpreset/:
+    post:
+      tags:
+      - Tax
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: ""
+        schema:
+          $ref: '#/definitions/addTaxPresetReqBody'
+      description: endpoint to add tax present to database
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    get:
+      tags:
+      - Tax
+      description: returns all tax presets
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/taxPresetDetailResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+  /rest/api/v1/requesttopay/settings/discountpreset/{discountpresetID}:
+    get:
+      tags:
+      - Discount
+      description: return details of a given discount preset
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: discountpresetID
+        in: path
+        description: Discount Preset id to be fetched
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/discountPresetResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    put:
+      tags:
+      - Discount
+      description: update existing discount preset information
+      operationId: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: discountpresetID
+        in: path
+        description: Discount Preset id to be updated
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Update a Preset
+        schema:
+          $ref: '#/definitions/addDiscountPresetBody'
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    delete:
+      tags:
+      - Discount
+      description: remove existing discount preset
+      operationId: deleteDiscountPreset
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: discountpresetID
+        in: path
+        description: Discount Preset id to be deleted
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+  /rest/api/v1/requesttopay/settings/discountpreset/:
+    post:
+      tags:
+      - Discount
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Add a discount Preset
+        schema:
+          $ref: '#/definitions/addDiscountPresetBody'
+      description: endpoint to add discount preset to database
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    get:
+      tags:
+      - Discount
+      description: returns all discount presets
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/discountPresetResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+  /rest/api/v1/requesttopay/settings/shippingpreset/{shippingpresetID}:
+    get:
+      tags:
+      - Shipping
+      description: return details of given shipping preset
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: shippingpresetID
+        in: path
+        description: Discount Preset id to be fetched
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/shippingPresetResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    put:
+      tags:
+      - Shipping
+      description: update existing shipping preset information
+      operationId: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: shippingpresetID
+        in: path
+        description: Update preset information based on ID
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Update preset information based on ID
+        schema:
+          $ref: '#/definitions/addShippingPresetBody'
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    delete:
+      tags:
+      - Shipping
+      description: remove existing shipping preset
+      operationId: deleteShippingPreset
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: shippingpresetID
+        in: path
+        description: Shipping Preset id to be deleted
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+  /rest/api/v1/requesttopay/settings/shippingpreset/:
+    post:
+      tags:
+      - Shipping
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Add shipping preset information
+        schema:
+          $ref: '#/definitions/addShippingPresetBody'
+      description: endpoint to add shipping present to database
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    get:
+      tags:
+      - Shipping
+      description: returns all shipping presets
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/shippingPresetResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+  /rest/api/v1/requesttopay/settings/invoiceNotes/:
+    post:
+      tags:
+      - Invoice Notes
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Add a Invoice Note
+        schema:
+          $ref: '#/definitions/addInvoiceNoteBody'
+      description: endpoint to add a invoice note
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    get:
+      tags:
+      - Invoice Notes
+      description: returns all invoice notes
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/invoiceNoteResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    put:
+      tags:
+      - Invoice Notes
+      description: update existing invoice note
+      operationId: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Update Invoice Note Information based on Merchant MSISDN
+        schema:
+          $ref: '#/definitions/addInvoiceNoteBody'
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+  /rest/api/v1/requesttopay/settings/advancedSettings/:
+    put:
+      tags:
+      - Advanced Settings
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Update Advanced Settings based on the Merchant's MSISDN
+        schema:
+          $ref: '#/definitions/addAdvancedSettingsBody'
+      description: endpoint to update advanced settings
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    get:
+      tags:
+      - Advanced Settings
+      description: returns the advanced setting option based on Merchant MSISDN
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/advancedSettingsResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+    post:
+      tags:
+      - payment
+      parameters:
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: Add shipping preset information
+        schema:
+          $ref: '#/definitions/merchantPaymentConfirmRequest'
+      description: endpoint to add shipping present to database
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: MR-PAY-T34
+              message_en:
+                type: string
+                example: Payment Successful
+              message_ur:
+                type: string
+                example: کامیاب ادائیگی
+              data:
+                $ref: '#/definitions/merchantPaymentConfirmResponse'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/requesttopay/settings/termsandconditions:
+    post:
+      tags:
+      - Terms and Conditions
+      description: ""
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: ""
+        schema:
+          $ref: '#/definitions/accepttermandconditionReqBody'
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/genericSuccessResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی
+        "500":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: PT-RTP-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: غیر متوقع اندرونی سرور کی خرابی

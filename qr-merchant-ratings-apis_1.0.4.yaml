@@ -1,0 +1,321 @@
+swagger: "2.0"
+info:
+  title: QR Merchant Ratings APIs
+  x-ibm-name: qr-merchant-ratings-apis
+  version: 1.0.4
+  description: Contains APIs For QR Merchant Ratings
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauthmerchant:
+  - merchant
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: Default Scope for Client Auth
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: false
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: QR Merchant Ratings APIs
+definitions:
+  request:
+    type: object
+    properties:
+      rating:
+        type: integer
+        example: 4
+      txID:
+        type: string
+        example: 23498GDBSSD
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - rating
+  response:
+    type: object
+    properties:
+      averageRating:
+        type: number
+        example: 4.3
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/account/profile/rating:
+    put:
+      tags:
+      - Add New QR Rating for a Merchant
+      summary: Add New QR Rating for Merchant
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: msisdn
+        type: string
+      - in: query
+        name: username
+        type: string
+      - in: query
+        name: shortcode
+        type: string
+      - in: query
+        name: fonepay
+        type: string
+      - in: query
+        name: mastercard
+        type: string
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/request'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+              data:
+                $ref: '#/definitions/response'
+              additionalDetails:
+                items:
+                  $ref: '#/definitions/additionalObject'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T34
+              responseMessage:
+                type: string
+                example: The transaction was unsuccessful
+    get:
+      tags:
+      - GET QR Rating for a Merchant
+      summary: GET QR Rating for Merchant
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: msisdn
+        type: string
+      - in: query
+        name: username
+        type: string
+      - in: query
+        name: shortcode
+        type: string
+      - in: query
+        name: fonepay
+        type: string
+      - in: query
+        name: mastercard
+        type: string
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: AM-PR-T36
+              responseMessage_en:
+                type: string
+                example: The transaction completed successfully
+              responseMessage_ur:
+                type: string
+                example: The transaction completed successfully
+              data:
+                $ref: '#/definitions/response'
+              additionalDetails:
+                items:
+                  $ref: '#/definitions/additionalObject'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-PR-T34
+              responseMessage:
+                type: string
+                example: The transaction was unsuccessful

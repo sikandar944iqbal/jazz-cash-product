@@ -1,0 +1,288 @@
+swagger: "2.0"
+info:
+  title: Request to pay Generate PDF Request
+  x-ibm-name: request-to-pay-generate-pdf-request
+  version: 1.0.5
+  description: |-
+    Request to pay Generate PDF Request API
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauthmerchant:
+  - merchant
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    success-content: header
+    error-content: header
+    enabled: true
+  buffering: false
+  application-authentication:
+    certificate: false
+  cors:
+    enabled: false
+definitions:
+  getInvoicePDFResponse:
+    type: object
+    properties:
+      invoicePDFBase64:
+        type: string
+        example: VGhpcyBpcyBhIHRlc3QgYmFzZSA2NCBkYXRh
+  invoicePDFRequest:
+    type: object
+    properties:
+      dueDate:
+        type: string
+        example: 01-01-2020
+      status:
+        type: string
+        example: approved
+        enum:
+        - Completed
+        - Rejected
+        - Received
+        - Delayed
+      reminders:
+        type: number
+        example: 0
+      totalbill:
+        type: number
+        example: 0
+      shipping:
+        type: object
+        properties:
+          description:
+            type: string
+            example: Shipping
+          type:
+            type: string
+            example: Flat
+          amount:
+            type: number
+            example: 500
+      attachment:
+        type: object
+        example: test.jpg
+        description: Multipart File Object
+      items:
+        items:
+          properties:
+            description:
+              type: string
+              example: Nido Fortigro
+            price:
+              type: number
+              example: 1
+            amount:
+              type: number
+              example: 500
+            tax:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: Shipping
+                type:
+                  type: string
+                  example: Federal Excise Duty
+                  enum:
+                  - Percentage
+                  - Flat
+                amount:
+                  type: number
+                  example: 500
+            discount:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: 10% Discount
+                type:
+                  type: string
+                  example: Federal Excise Duty
+                  enum:
+                  - Percentage
+                  - Flat
+                amount:
+                  type: number
+                  example: 500
+      recepientDetails:
+        type: object
+        properties:
+          name:
+            type: string
+            example: Ali Ahmed
+          phoneNo:
+            type: string
+            example: "923462104357"
+          email:
+            type: string
+            example: example@gmail.com
+    required:
+    - dueDate
+    - items
+    - recepientDetails
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/requesttopay/getInvoicePDF:
+    post:
+      tags:
+      - Request To Pay
+      summary: Request To Pay via invoice
+      description: Request To Pay - Get Invoice PDF
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-MPIN
+        required: true
+        type: string
+        description: User MPIN
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/invoicePDFRequest'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: PT-RTP-T04
+              message_en:
+                type: string
+                example: Request sent Successfully
+              message_ur:
+                type: string
+                example: درخواست کامیاب
+              data:
+                $ref: '#/definitions/getInvoicePDFResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              statusCode:
+                type: number
+                example: PT-TRH-T01
+              message_en:
+                type: string
+                example: Unexpected Internal server error
+              message_ur:
+                type: string
+                example: Unexpected Internal server error

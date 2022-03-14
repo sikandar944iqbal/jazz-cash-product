@@ -1,0 +1,233 @@
+swagger: "2.0"
+info:
+  title: Debit Card Change PIN
+  x-ibm-name: debit-card-change-pin
+  version: 1.0.4
+  description: |-
+    API to Change Card PIN
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauthmerchant:
+  - merchant
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://secure-card-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: false
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Debit Card PIN Change
+  description: This API changes the Debit card PIN
+definitions:
+  Request:
+    type: object
+    properties:
+      oldCardPin:
+        type: string
+        example: asdfasd
+      newCardPin:
+        type: string
+        example: asdfa123asd
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - oldCardPin
+    - newCardPin
+  Response:
+    type: object
+    properties:
+      originatorConversationID:
+        type: string
+        example: AG_20130129T102103
+      conversationID:
+        type: string
+        example: AG_20130129T102103
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      transEndDate:
+        type: string
+        example: 2004-01-05T00:00:00.000Z
+      transEndTime:
+        type: string
+        example: "03:33:12.943"
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/debitcard/changepin:
+    post:
+      tags:
+      - Change Card PIN
+      summary: Debit Card PIN Change
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: header
+        name: X-MPIN
+        required: true
+        type: string
+        description: encrypted
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: VD-CP-
+              responseMessage_en:
+                type: string
+                example: The transaction was completed successfully.
+              responseMessage_ur:
+                type: string
+                example: The transaction was completed successfully.
+              data:
+                $ref: '#/definitions/Response'
+              additionalDetails:
+                items:
+                  $ref: '#/definitions/additionalObject'
+        "422":
+          description: Failed to create card PIN.
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: VD-CP-
+              responseMessage:
+                type: string
+                example: Failed to create card PIN.
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/Request'
+      description: The request body for the operation

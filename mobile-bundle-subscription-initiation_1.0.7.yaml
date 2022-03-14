@@ -1,0 +1,254 @@
+swagger: "2.0"
+info:
+  title: Mobile Bundle Subscription Initiation
+  x-ibm-name: mobile-bundle-subscription-initiation
+  x-ibm-summary: 30th March - Merchant Phase-2 Deployment
+  version: 1.0.7
+  description: This API will check the eligibility and initiate mobile bundle subscription
+    process
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://gsmservicesmanagement-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+definitions:
+  initSubscription_request:
+    type: object
+    required:
+    - targetMSISDN
+    - bundleId
+    properties:
+      targetMSISDN:
+        type: string
+        example: ""
+      bundleId:
+        type: integer
+        example: 1000
+      operatorCode:
+        type: string
+        example: uFone
+      remarks:
+        type: string
+        example: ""
+      targetName:
+        type: string
+        example: ""
+      additionaldetails:
+        type: array
+        items:
+          type: object
+          properties:
+            key1:
+              type: string
+              example: value
+  200_completed:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: GSM-MB-T02
+      message_en:
+        type: string
+        example: Mobile Bundle Subscription Transaction Initiation Done Successfully
+      message_ur:
+        type: string
+        example: ""
+      data:
+        $ref: '#/definitions/initResponse'
+  initResponse:
+    type: object
+    properties:
+      originalConversationID:
+        type: string
+        example: S_X2013012921001
+      conversationID:
+        type: string
+        example: AG_20130129T102103
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      targetMSISDN:
+        type: string
+        example: "9213415678906"
+      balance:
+        type: number
+        format: double
+        example: "1000.1"
+      amount:
+        type: number
+        format: double
+        example: "867.00"
+      commission:
+        type: number
+        format: double
+        example: "20.00"
+      fed:
+        type: number
+        example: 0.5
+      wht:
+        type: number
+        example: 0.3
+      transEndDate:
+        type: string
+        example: 2004-01-05T00:00:00.000Z
+      transEndTime:
+        type: string
+        example: "03:33:12.943"
+      fee:
+        type: number
+        example: 0.7
+  422_MB05:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: GSM-MB-T05
+      message_en:
+        type: string
+        example: Fail To Check The MSISDN For Jazz Bundle Subscription Eligibility
+      message_ur:
+        type: string
+        example: ""
+      data:
+        type: object
+paths:
+  /rest/api/v1/gsm/bundle/init:
+    post:
+      operationId: initSubscription
+      description: initiate Subscription
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/initSubscription_request'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_completed'
+        "422":
+          description: This is a template for business errors should be returned by
+            this API
+          schema:
+            $ref: '#/definitions/422_MB05'

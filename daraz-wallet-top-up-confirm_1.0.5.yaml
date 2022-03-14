@@ -1,0 +1,213 @@
+swagger: "2.0"
+info:
+  title: Daraz Wallet Top-up Confirm
+  x-ibm-name: daraz-wallet-top-up-confirm
+  version: 1.0.5
+  description: |-
+    This API will confirm Daraz wallet top-up
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://walletmanagement-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  catalogs: {}
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  cors:
+    enabled: true
+definitions:
+  confirmDarazTopup:
+    type: object
+    properties:
+      amount:
+        type: string
+        example: ""
+      userId:
+        type: string
+        example: ""
+      transactionId:
+        type: string
+        example: ""
+      saveContact:
+        type: boolean
+        example: false
+      targetMSISDN:
+        type: string
+        example: ""
+      nickName:
+        type: string
+        example: ""
+      additionaldetails:
+        type: array
+        items:
+          type: object
+          properties:
+            key1:
+              type: string
+              example: value
+  200_completed:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: WM-DW-T03
+      message_en:
+        type: string
+        example: Daraz wallet topup confirmation done successfully
+      message_ur:
+        type: string
+        example: ""
+      data:
+        $ref: '#/definitions/confirmDarazTopupResponse'
+  confirmDarazTopupResponse:
+    type: object
+    properties:
+      fundOrderId:
+        type: string
+        example: S_X2013012921001
+  422_DW04:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: WM-DW-T02
+      message_en:
+        type: string
+        example: Fail to confirm Daraz wallet top-up
+      message_ur:
+        type: string
+        example: ""
+      data:
+        type: object
+paths:
+  /rest/api/v1/wallet/daraz/confirm:
+    post:
+      operationId: confirmDarazTopup
+      description: confirm Daraz Topup
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: header
+        name: X-MPIN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/confirmDarazTopup'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_completed'
+        "422":
+          description: This is a template for business errors should be returned by
+            this API
+          schema:
+            $ref: '#/definitions/422_DW04'

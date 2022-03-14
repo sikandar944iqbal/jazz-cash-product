@@ -1,0 +1,168 @@
+swagger: "2.0"
+info:
+  title: Admin API - CORs
+  x-ibm-name: admin-api-cors
+  version: 1.0.1
+  description: admin apis with cors enabled
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthadmin:
+  - admin
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthadmin:
+    type: oauth2
+    flow: application
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      admin: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+tags:
+- name: Admin
+definitions:
+  User:
+    title: User
+    type: object
+    properties:
+      _id:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      email:
+        type: string
+      roles:
+        type: array
+        items:
+          type: string
+      "":
+        type: string
+  Error:
+    title: Error
+    type: object
+    properties:
+      message:
+        type: string
+paths:
+  /rest/api/v1/admin/allAdmin:
+    get:
+      summary: Get Admin All Admin
+      tags:
+      - Admin
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/User'
+      operationId: get-rest-api-v1-admin-allAdmin
+      description: ""
+  /rest/api/v1/admin/changeRole/{id}:
+    parameters:
+    - type: string
+      name: id
+      in: path
+      required: true
+    put:
+      summary: Update Admin Role
+      operationId: put-rest-api-v1-admin-changeRole-id
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/User'
+        "422":
+          description: Unprocessable Entity (WebDAV)
+          schema:
+            type: object
+            properties:
+              error:
+                $ref: '#/definitions/Error'
+      tags:
+      - Admin
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            password:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+      description: Update Admin User Role

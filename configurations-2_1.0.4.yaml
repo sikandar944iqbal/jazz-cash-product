@@ -1,0 +1,268 @@
+swagger: "2.0"
+info:
+  title: Configurations_2
+  x-ibm-name: configurations-2
+  version: 1.0.4
+  description: This API returns Configurations For Back Office
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthadmin:
+  - admin
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthadmin:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      admin: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  cors:
+    enabled: true
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Configurations_2
+definitions:
+  regconfiguration:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: T01
+      responseMessage_en:
+        type: string
+        example: The transaction was completed successfully.
+      responseMessage_ur:
+        type: string
+        example: The transaction was completed successfully.
+      data:
+        type: array
+        items:
+          properties:
+            bvsAttempts_max:
+              type: number
+            bvsFrequency_Hrs:
+              type: number
+            cnicVerifyAttempts_max:
+              type: number
+            cnicVerifyFrequency_Hrs:
+              type: number
+            otpAttemptsForRegUser_max:
+              type: number
+            otpRegUserFrequency_Hrs:
+              type: number
+            otpAttemptsForNonRegUser_max:
+              type: number
+            otpNonRegUserFrequency_Hrs:
+              type: number
+            kycAttempts_max:
+              type: number
+            kycFrequency_Hrs:
+              type: number
+            kyc1Attempts_max:
+              type: number
+            kyc1Frequency_Hrs:
+              type: number
+            devicesPerAccount_max:
+              type: number
+            devicesPerAccount_Hrs:
+              type: number
+            accountsPerDevice_max:
+              type: number
+            accountsPerDevice_Hrs:
+              type: number
+            concurrentDevicePerAccount_max:
+              type: number
+            regRequestTimeout_min:
+              type: number
+            walletReqExpiry_Hrs:
+              type: number
+            walletReqParked_max:
+              type: number
+            bvsUpgradeAttempts_max:
+              type: number
+            bvsUpgradeFrequency_Hrs:
+              type: number
+            notifyUserOtpCount:
+              type: number
+            customerType:
+              type: string
+paths:
+  /rest/api/v1/profile/regconfiguration/{regconfiguration_id}:
+    put:
+      tags:
+      - Configuration
+      summary: Update Registeration Configuration Info
+      description: ""
+      operationId: regconfiguration_id
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-IBM-CLIENT-ID
+        in: header
+        required: true
+        description: Client credentials required for API Connect
+        type: string
+      - name: regconfiguration_id
+        in: path
+        required: true
+        description: Aggregator City Code ID
+        type: string
+      - name: body
+        in: body
+        required: false
+        description: Put body of the Promotion Code
+        schema:
+          $ref: '#/definitions/regconfiguration'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/regconfiguration'
+      deprecated: false
+      consumes: []
+  /rest/api/v1/profile/regconfiguration:
+    get:
+      tags:
+      - Configuration
+      summary: Get Registeration Configuration Info
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/regconfiguration'
+      consumes: []

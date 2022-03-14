@@ -1,0 +1,1312 @@
+swagger: "2.0"
+info:
+  title: Payoneer Integration APIs
+  x-ibm-name: payoneer-integration-apis
+  x-ibm-summary: Added Admin scope
+  version: 1.1.1
+  description: Payoneer Integration with JazzCash App APIs.
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauthadmin:
+  - admin
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthadmin:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      admin: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  properties:
+    target-url:
+      value: http://partner-services-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+    catch: []
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: false
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Payoner Integration APIs
+  description: Payoneer Integration with JazzCash App APIs.
+definitions:
+  RefreshAccessTokenResponse:
+    description: Access Token Refreshed Successfully
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PS-PY-T12
+      message_en:
+        type: string
+        example: Access Token Refreshed Successfully
+      message_ur:
+        type: string
+        example: رسائی ٹوکن تازہ کاری مکمل کامیابی
+      data:
+        type: object
+  RefreshAccessTokenResponseBad:
+    description: An error trying to refresh access token
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PS-PY-T13
+      message_en:
+        type: string
+        example: An error trying to refresh access token
+      message_ur:
+        type: string
+        example: An error trying to refresh access token
+      data:
+        type: object
+  TransactionHistoryResponse:
+    description: Transaction History Success
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PS-PY-T28
+      message_en:
+        type: string
+        example: Transaction History Fetched Successfully.
+      message_ur:
+        type: string
+        example: کامیابی مینلینڈ دلوایا.
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            txID:
+              type: string
+              example: cb5df350-59a3-4b3a-904d-229aa884b7b4
+            txType:
+              type: string
+              example: Payoneer Transfer
+            txStatus:
+              type: string
+              example: Cancelled
+            msisdn:
+              type: string
+              example: 923040863193
+            currency:
+              type: string
+              example: USD
+            amount:
+              type: string
+              example: 1
+            commitID:
+              type: string
+              example: 00f94747-eed8-4b26-b14d-8269cec76ed1
+            txFee:
+              type: string
+              example: 0.02
+            exchangeRate:
+              type: string
+              example: 157.45
+            amountInPKR:
+              type: string
+              example: 157.45
+            createdAt:
+              type: string
+              example: 2020-11-23T12:35:06.983Z
+            paymentID:
+              type: string
+              example: 4366181896497325
+            txEndDate:
+              type: string
+              example: 20201123
+            txEndTime:
+              type: string
+              example: 121123
+  CancelTransactionResponse:
+    description: Cancel Transaction Response
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PS-PY-T33
+      message_en:
+        type: string
+        example: Transaction cancelled successfully
+      message_ur:
+        type: string
+        example: ٹرانزیکشن کامیابی سے منسوخ کر دیا
+      data:
+        type: object
+  CancelTransactionResponseBad:
+    description: Cancel Transaction Response
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: PS-PY-T34
+      message_en:
+        type: string
+        example: An Error occured trying to cancel transaction
+      message_ur:
+        type: string
+        example: An Error occured trying to cancel transaction
+      data:
+        type: object
+  TransactionStatusSuccessResponse:
+    description: Transaction History Success
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PS-PY-T35
+      message_en:
+        type: string
+        example: Transaction Status Fetched Successfully.
+      message_ur:
+        type: string
+        example: کامیابی مینلینڈ دلوایا.
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            txID:
+              type: string
+              example: cb5df350-59a3-4b3a-904d-229aa884b7b4
+            txType:
+              type: string
+              example: Payoneer Transfer
+            txStatus:
+              type: string
+              example: Cancelled
+            txCode:
+              type: string
+              example: "0002"
+            msisdn:
+              type: string
+              example: 923040863193
+            currency:
+              type: string
+              example: USD
+            amount:
+              type: string
+              example: 1
+            commitID:
+              type: string
+              example: 00f94747-eed8-4b26-b14d-8269cec76ed1
+            txFee:
+              type: string
+              example: 0.02
+            exchangeRate:
+              type: string
+              example: 157.45
+            amountInPKR:
+              type: string
+              example: 157.45
+            createdAt:
+              type: string
+              example: 2020-11-23T12:35:06.983Z
+            paymentID:
+              type: string
+              example: 4366181896497325
+            txEndDate:
+              type: string
+              example: 20201123
+            txEndTime:
+              type: string
+              example: 121123
+  TransactionStatusFailureResponse:
+    description: Transaction History Failed
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PS-PY-T36
+      message_en:
+        type: string
+        example: Transaction Status fetching unsucessful.
+      message_ur:
+        type: string
+        example: Transaction Status fetching unsucessful
+      data: {}
+  PayoneerAccountLinkingFailed:
+    description: Account Linking Failed
+    type: object
+    properties:
+      httpCode:
+        type: string
+      httpMessage:
+        type: string
+      moreInformation:
+        type: string
+      error:
+        type: string
+        example: invalid_grant
+      error_description:
+        type: string
+  BalanceObject:
+    description: Balance Object
+    type: object
+    properties:
+      id:
+        type: string
+        example: 4366181891468602
+      type:
+        type: string
+        example: BALANCE
+      currency:
+        type: string
+        example: USD
+      status:
+        type: string
+        example: 2
+      status_name:
+        type: string
+        example: Activated
+      available_balance:
+        type: string
+        example: 6564.39
+      update_time:
+        type: string
+        example: 2020-06-30T08:04:12.000Z
+  PayoneerUnauthorizedResponse:
+    description: Balance Object
+    type: object
+    properties:
+      error:
+        type: string
+        example: Unauthorized
+      error_description:
+        type: string
+        example: application is not registered, or active
+      error_details:
+        type: object
+        properties:
+          code:
+            type: integer
+            example: 401
+          sub_code:
+            type: integer
+            example: 4010
+  UnableToFetchRegistrationURL:
+    description: Balance Object
+    type: object
+    properties:
+      audit_id:
+        type: integer
+        example: 0
+      code:
+        type: integer
+        example: 10000
+      description:
+        type: string
+        example: Unauthorized access
+      hint:
+        type: string
+        example: please review your credentials and security information
+  DelinkRequest:
+    type: object
+    properties:
+      msisdn:
+        format: string
+        example: "923801000004"
+    required:
+    - msisdn
+  DelinkResponseData:
+    description: Delink Response Data Object
+    type: object
+    properties:
+      status:
+        type: string
+        example: success
+      error:
+        type: string
+      error_description:
+        type: string
+  InitiateTransferRequest:
+    type: object
+    properties:
+      amount:
+        format: number
+        example: 5
+      currency:
+        format: string
+        example: USD
+      remark:
+        type: string
+        example: hakjfdsa dajh
+      additionalDetails:
+        type: array
+        items:
+          type: object
+          properties:
+            key:
+              type: string
+              example: abc
+            value:
+              type: string
+              example: def
+    required:
+    - amount
+    - currency
+  InitiateTransferResponse:
+    description: Initiate Transfer Response Object
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PY-T10
+      responseMessage_en:
+        type: string
+        example: Debit Transaction Request Successful.
+      responseMessage_ur:
+        type: string
+        example: Debit Transaction Request Successful.
+      data:
+        type: object
+        properties:
+          company_name:
+            type: string
+            example: Payoneer
+          transfer_amount:
+            type: number
+            example: 1
+          currency:
+            type: string
+            example: USD
+          exchange_rate:
+            type: number
+            example: 166.75642
+          fees:
+            type: number
+            example: 0.02
+          fees_in_pkr:
+            type: number
+            example: 3.3351283
+          commit_id:
+            type: string
+            example: 0126e0df-d910-407e-a376-bec5716f2c96
+      additionalDetails:
+        items:
+          $ref: '#/definitions/additionalObject'
+  InitiateTransferBadResponse:
+    description: Initiate Transfer Response Object
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: PY-T11
+      responseMessage_en:
+        type: string
+        example: An error occurred trying to debit.
+      responseMessage_ur:
+        type: string
+        example: An error occurred trying to debit.
+  ConfirmTransferRequest:
+    type: object
+    properties:
+      txID:
+        format: string
+        example: a58a281d-e9e1-4fd9-bbd7-3e5798a52948
+      msisdn:
+        format: string
+        example: "92332141512"
+    required:
+    - msisdn
+  ConfirmTransferResponse:
+    description: Confirm Transfer Response Object
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PY-T12
+      responseMessage_en:
+        type: string
+        example: Transaction Committed Successful.
+      responseMessage_ur:
+        type: string
+        example: Transaction Committed Successful.
+      data:
+        type: object
+        properties:
+          company_name:
+            type: string
+            example: Payoneer
+          payment_id:
+            type: string
+            example: 4366181896031211
+          transfer_amount:
+            type: number
+            example: 1
+          currency:
+            type: string
+            example: USD
+          fees:
+            type: number
+            example: 0.02
+          fees_in_pkr:
+            type: number
+            example: 3.3289952
+          exchange_rate:
+            type: number
+            example: 166.44977
+      additionalDetails:
+        items:
+          $ref: '#/definitions/additionalObject'
+  ConfirmTransferBadResponse403:
+    description: Confirm Transfer Bad Response Object
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: PY-T13
+      responseMessage_en:
+        type: string
+        example: Multi-Factor Authentication Required To Proceed
+      responseMessage_ur:
+        type: string
+        example: Multi-Factor Authentication Required To Proceed
+      data:
+        type: object
+        properties:
+          type:
+            type: string
+            example: mfa
+          expires_at:
+            type: string
+            example: 2020-07-06T16:29:04.152Z
+          session_id:
+            type: string
+            example: 7a369a6e8edb4999b6128310c668e70c
+          url:
+            type: string
+            example: https://auth.sandbox.payoneer.com/#?t=7a369a6e8edb4999b6128310c668e70c
+          url_modal_modifier:
+            type: string
+            example: '&inModalDialog=true'
+          url_integrated_modifier:
+            type: string
+            example: '&inIntegratedView=true'
+          window_width:
+            type: number
+            example: 540
+          window_height:
+            type: number
+            example: 466
+  ConfirmTransferBadResponse400:
+    description: Confirm Transfer Bad Response Object
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: PY-T18
+      responseMessage_en:
+        type: string
+        example: Daily Limit Exceeded Cannot proceed with transaction
+      responseMessage_ur:
+        type: string
+        example: Daily Limit Exceeded Cannot proceed with transaction
+      data:
+        type: object
+        properties:
+          remainingLimits:
+            type: object
+            properties:
+              dailySendingLimit:
+                type: number
+                example: 13
+              dailyReceivingLimit:
+                type: number
+                example: 900
+              monthlySendingLimit:
+                type: number
+                example: 1121
+              monthlyReceivingLimit:
+                type: number
+                example: 29000
+              yearlySendingLimit:
+                type: number
+                example: 4213
+              yearlyReceivingLimit:
+                type: number
+                example: 300000
+  GetCommitResponseRequest:
+    type: object
+    properties:
+      response_path:
+        format: string
+        example: /v4/auth/commitpayments/responses/fcb6f578-a996-4673-94a8-7804ea56c623
+    required:
+    - response_path
+  GetCommitResponse200:
+    description: Get Commit Response Object
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PY-T19
+      responseMessage_en:
+        type: string
+        example: Transaction Response Fetched Successfully.
+      responseMessage_ur:
+        type: string
+        example: Transaction Response Fetched Successfully.
+      data:
+        type: object
+        properties:
+          company_name:
+            type: string
+            example: Payoneer
+          payment_id:
+            type: string
+            example: 4366181896031139
+          transfer_amount:
+            type: number
+            example: 1
+          currency:
+            type: string
+            example: USD
+          fees:
+            type: number
+            example: 0.02
+          fees_in_pkr:
+            type: number
+            example: 3.3349864
+          exchange_rate:
+            type: number
+            example: 166.74933
+      additionalDetails:
+        items:
+          $ref: '#/definitions/additionalObject'
+  GetCommitResponse400:
+    description: Get Commit Bad Response Object
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: PY-T20
+      responseMessage_en:
+        type: string
+        example: An Error Occured while trying to fetch transaction response
+      responseMessage_ur:
+        type: string
+        example: An Error Occured while trying to fetch transaction response
+  GetExchangeRateResponse:
+    description: Get Exchange Rate Response
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PY-T14
+      responseMessage_en:
+        type: string
+        example: Exchange Rate fetched successfully.
+      responseMessage_ur:
+        type: string
+        example: Exchange Rate fetched successfully.
+      data:
+        type: object
+        properties:
+          from:
+            type: string
+            example: USD
+          amount:
+            type: integer
+            format: int32
+            example: 1
+          to:
+            type: array
+            items:
+              type: object
+              properties:
+                quotecurrency:
+                  type: string
+                  example: PKR
+                mid:
+                  type: number
+                  example: 167.07187
+      additionalDetails:
+        items:
+          $ref: '#/definitions/additionalObject'
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/partner/payoneer/exchange_rate:
+    get:
+      tags:
+      - Get Exchange Rate
+      summary: Get Exchange Rate for USD to PKR
+      description: Get Exchange Rate for USD to PKR
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: false
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: false
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: MSISDN of the user
+        type: string
+      - name: from
+        in: query
+        required: true
+        description: Currency from which to convert
+        type: string
+      - name: to
+        in: query
+        required: true
+        description: Currency to which to convert
+        type: string
+      - name: amount
+        in: query
+        required: true
+        description: Amount
+        type: number
+        format: float
+      responses:
+        "200":
+          description: Exchange Rate fetched successfully
+          schema:
+            $ref: '#/definitions/GetExchangeRateResponse'
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/oauth/redirect:
+    get:
+      tags:
+      - Redirect URI Handler for Payoneer
+      summary: Redirect URI Handler for Payoneer
+      description: 'This end-point will serve as a redirect handler for Payoneer,
+        that is why it won''t have any headers or other requirements as it will only
+        be called by Payoneer third party. '
+      produces:
+      - application/json
+      parameters:
+      - name: code
+        in: query
+        required: false
+        description: authorization code returned by payoneer login page.
+        type: string
+      - name: type
+        in: query
+        required: false
+        type: string
+      - name: session_id
+        in: query
+        required: false
+        type: string
+      - name: response_path
+        in: query
+        required: false
+        type: string
+      responses:
+        "200":
+          description: auth code return
+        "203":
+          description: response_path returned
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/account/:
+    get:
+      tags:
+      - Account
+      summary: Get Payoneer Account Details if user's payoneer profile is already
+        linked and user is also logged in.
+      description: This API returns Payoneer Account details against the msisdn of
+        the user if the user is linked and logged into the app. If the user is logged
+        into the app but does not have a payoneer profile linked to his/her account
+        then this api will return the custom login and registration URLs.
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: msisdn of the user.
+        type: string
+      responses:
+        "200":
+          description: account linked, payoneer balances returned
+        "203":
+          description: account not linked, login and registration link returned
+        "401":
+          description: Payoneer Authentication Failed
+        "422":
+          description: Payoneer account doesn't exist and unable to get registeration
+            URL
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/oauth/delink:
+    patch:
+      tags:
+      - Delink Account
+      summary: Delinks an existing account by revoking access token
+      description: This API revokes the current access token of the particular account
+        linked account, based on MSISDN
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: false
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: false
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: Client credentials required for API Connect
+        type: string
+      responses:
+        "200":
+          description: account delinked successfully
+        "422":
+          description: error occurred in account delinking
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/transfer/init:
+    post:
+      tags:
+      - Initiate Transfer Request
+      summary: Initiate Transfer request from Payoneer Account to JazzCash account
+      description: This API initiates transfer request from user's Payoneer Account
+        to their JazzCash account.
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: false
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: false
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: MSISDN of the user
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/InitiateTransferRequest'
+      responses:
+        "200":
+          description: debit transaction successful
+          schema:
+            $ref: '#/definitions/InitiateTransferResponse'
+        "400":
+          description: debit transaction unsuccessful
+          schema:
+            $ref: '#/definitions/InitiateTransferBadResponse'
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/transfer/confirm:
+    post:
+      tags:
+      - Confirm Transfer Request
+      summary: Confirm Transfer request from Payoneer Account to JazzCash account
+      description: This API confirms transfer request from user's Payoneer Account
+        to their JazzCash account.
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: false
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: false
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: MSISDN of the user
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: MPIN of the user
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/ConfirmTransferRequest'
+      responses:
+        "200":
+          description: confirm transaction successful
+          schema:
+            $ref: '#/definitions/ConfirmTransferResponse'
+        "400":
+          description: confirm transaction unsuccessful
+          schema:
+            $ref: '#/definitions/ConfirmTransferBadResponse400'
+        "403":
+          description: confirm transaction unsuccessful
+          schema:
+            $ref: '#/definitions/ConfirmTransferBadResponse403'
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/transfer/commit/response:
+    post:
+      tags:
+      - Get Commit Response
+      summary: Get response for confirmed/committed transaction after MFA challenge
+      description: This API returns response for confrimed/committed transaction
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: false
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: false
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: Client's MSISDN
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/GetCommitResponseRequest'
+      responses:
+        "200":
+          description: commit response successfully fetched
+          schema:
+            $ref: '#/definitions/GetCommitResponse200'
+        "400":
+          description: commit response failed
+          schema:
+            $ref: '#/definitions/GetCommitResponse400'
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/transactions:
+    get:
+      tags:
+      - Transaction History
+      summary: Fetches Transaction History
+      description: Fetches Transaction History
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: MSISDN of the user.
+        type: string
+      - name: start
+        in: query
+        required: true
+        description: transaction start date (2021-01-01)
+        type: string
+      - name: end
+        in: query
+        required: true
+        description: transaction end date (2021-01-31)
+        type: string
+      responses:
+        "200":
+          description: Access Token Resfreshed Successfully
+          schema:
+            $ref: '#/definitions/TransactionHistoryResponse'
+        "422":
+          description: User linking failed
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/oauth/link:
+    get:
+      tags:
+      - Auth Code Handler
+      summary: Exchanges Auth Code for Access Code
+      description: This API Auth Code Redirect Handler for Payoneer Account Linking,
+        it exchanges authorization code for access code and saves it in the database
+        for accessing user data in future
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: false
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: false
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: MSISDN of the user.
+        type: string
+      - name: code
+        in: query
+        required: true
+        description: authorization code returned by payoneer login page.
+        type: string
+      responses:
+        "200":
+          description: account linked, payoneer balances returned
+        "422":
+          description: User linking failed
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/linkedCards:
+    get:
+      tags:
+      - Fetch Linked Cards
+      summary: Used to fetch the linked account of payoneer with jazzcash
+      description: This API fetch linked account details
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: MSISDN of the user
+        type: string
+      responses:
+        "200":
+          description: Cards/Account found against this number
+        "422":
+          description: Status Fetch unsuccessful
+      consumes: []
+      security:
+      - oauthconsumer:
+        - consumer
+  /rest/api/v1/partner/payoneer/transfer/cancel:
+    post:
+      tags:
+      - Cancel Transfer Request
+      summary: cancel Transfer request from Payoneer Account to JazzCash account
+      description: This API cancels the transfer  transaction from user's Payoneer
+        Account to their JazzCash account.
+      produces:
+      - application/json
+      parameters:
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/ConfirmTransferRequest'
+      responses:
+        "200":
+          description: confirm transaction successful
+          schema:
+            $ref: '#/definitions/CancelTransactionResponse'
+        "422":
+          description: confirm transaction unsuccessful
+          schema:
+            $ref: '#/definitions/CancelTransactionResponseBad'
+      consumes: []

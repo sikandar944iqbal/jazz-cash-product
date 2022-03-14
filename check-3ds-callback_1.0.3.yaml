@@ -1,0 +1,65 @@
+swagger: "2.0"
+info:
+  title: Check 3DS Callback
+  x-ibm-name: check-3ds-callback
+  version: 1.0.3
+  description: Disabling CORS
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+securityDefinitions: {}
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        version: 2.0.0
+        title: invoke
+        header-control:
+          type: blacklist
+          values: []
+        parameter-control:
+          type: whitelist
+          values: []
+        timeout: 60
+        verb: keep
+        cache-response: protocol
+        cache-ttl: 900
+        stop-on-error: []
+        target-url: $(target-url)$(request.path)
+    catch: []
+  properties:
+    target-url:
+      value: http://secure-card-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  application-authentication:
+    certificate: false
+  activity-log:
+    success-content: payload
+    error-content: payload
+    enabled: true
+  catalogs: {}
+  buffering: true
+  cors:
+    enabled: false
+paths:
+  /rest/api/v1/deposit/debitcard/check3DS/callback:
+    post:
+      responses:
+        "200":
+          schema:
+            type: string
+          description: success

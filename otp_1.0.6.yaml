@@ -1,0 +1,292 @@
+swagger: "2.0"
+info:
+  title: OTP
+  x-ibm-name: otp
+  version: 1.0.6
+  description: |-
+    OTP related APIs.
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauthuser:
+  - user
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthuser:
+    type: oauth2
+    flow: application
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      user: Default Scope
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+definitions:
+  generateAndSend_request:
+    type: object
+    properties:
+      email:
+        type: string
+        example: kashif@gmail.com
+      otpType:
+        type: string
+        example: email
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_generateAndSend:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T40
+      responseMessage:
+        type: string
+        example: OTP generated
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005067512"
+          otpType:
+            type: string
+            example: email
+          next:
+            type: string
+            example: registration/otp/verification
+  otpVerify_request:
+    type: object
+    properties:
+      otp:
+        type: string
+        example: 1234hjhuy786
+      otpType:
+        type: string
+        example: email
+      pushID:
+        type: string
+        example: ""
+      mixpanelID:
+        type: string
+        example: ""
+      remarks:
+        type: string
+        example: some remarks
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  200_otpVerified:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: AM-REG-T41
+      responseMessage:
+        type: string
+        example: OTP verified
+      data:
+        type: object
+        properties:
+          msisdn:
+            type: string
+            example: "923005067512"
+paths:
+  /rest/api/v1/registration/otp/verification:
+    post:
+      operationId: verifyOTP
+      description: verify sms OTP
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-DEVICE-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/otpVerify_request'
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_otpVerified'
+  /rest/api/v1/registration/otp/get:
+    post:
+      operationId: initRegistration
+      description: initiate Registration process
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-DEVICE-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: X-ENV
+        in: header
+        required: false
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/generateAndSend_request'
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_generateAndSend'

@@ -1,0 +1,207 @@
+swagger: "2.0"
+info:
+  title: Account Upgrade
+  x-ibm-name: account-upgrade
+  x-ibm-summary: Latest version from TEST 4-Mar-2021
+  version: 1.0.5
+  description: This API upgrades transactional limits of the user.
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    success-content: activity
+    error-content: header
+    enabled: true
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  buffering: true
+  cors:
+    enabled: true
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Upgrade
+  description: Account Upgrade Operations
+definitions:
+  Request:
+    type: object
+    properties:
+      fingerprintScore:
+        type: integer
+        example: 4
+      fingerprintType:
+        type: integer
+        example: 2
+      fingerprints:
+        type: array
+        items:
+          type: object
+          properties:
+            fingerprintData:
+              type: string
+              example: jk87bf27ghfgcv09-kjhu7yhcfd6
+            fingerprintIndex:
+              type: integer
+              example: 5
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: object
+        properties:
+          key1:
+            type: string
+            example: value
+  Response:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: U01
+      responseMessage:
+        type: string
+        example: Account upgraded successfully
+  422_RE04:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: UE01
+      responseMessage:
+        type: string
+        example: Fail to call CPS
+  422_RE23:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: UE06
+      responseMessage:
+        type: string
+        example: Fail to verify finger print from nadra. Please retry
+paths:
+  /rest/api/v1/account/l1/upgrade:
+    post:
+      tags:
+      - Upgrade
+      summary: Account Upgrade
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: false
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/Request'
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/Response'
+        "401":
+          description: "422"
+          schema:
+            $ref: '#/definitions/422_RE04'
+        "402":
+          description: "422"
+          schema:
+            $ref: '#/definitions/422_RE23'
+      consumes: []

@@ -1,0 +1,218 @@
+swagger: "2.0"
+info:
+  title: Careem Voucher
+  x-ibm-name: careem-voucher
+  version: 1.0.4
+  description: This API will buy Careem voucher
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauthmerchant:
+  - merchant
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://marketplace-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    success-content: activity
+    error-content: header
+    enabled: true
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  buffering: true
+  cors:
+    enabled: true
+definitions:
+  confirmCareemVoucher:
+    type: object
+    properties:
+      amount:
+        type: string
+        example: ""
+      CNIC:
+        type: string
+        example: ""
+      companyCode:
+        type: string
+        example: ""
+      targetMSISDN:
+        type: string
+        example: ""
+      remarks:
+        type: string
+        example: ""
+      additionaldetails:
+        type: array
+        items:
+          type: object
+          properties:
+            key1:
+              type: string
+              example: value
+  200_completed:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: PSM-CV-T01
+      message_en:
+        type: string
+        example: Voucher code is bought successfully
+      message_ur:
+        type: string
+        example: ""
+      data:
+        $ref: '#/definitions/confirmCareemVoucherResponse'
+  confirmCareemVoucherResponse:
+    type: object
+    properties:
+      voucherCode:
+        type: string
+        example: S_X2013012921001
+  422_CV02:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      responseCode:
+        type: string
+        example: PSM-CV-T02
+      message_en:
+        type: string
+        example: Fail to buy Careem voucher
+      message_ur:
+        type: string
+        example: ""
+      data:
+        type: object
+paths:
+  /rest/api/v1/marketplace/careem/voucher/confirm:
+    post:
+      operationId: getCareemVoucher
+      description: get Careem Voucher
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-DEVICE-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: header
+        name: X-MPIN
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/confirmCareemVoucher'
+        description: The request body for the operation
+        required: true
+      responses:
+        "200":
+          description: 'code: 200'
+          schema:
+            $ref: '#/definitions/200_completed'
+        "422":
+          description: This is a template for business errors should be returned by
+            this API
+          schema:
+            $ref: '#/definitions/422_CV02'

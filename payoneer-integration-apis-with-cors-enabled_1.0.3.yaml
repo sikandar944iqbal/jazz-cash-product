@@ -1,0 +1,190 @@
+swagger: "2.0"
+info:
+  title: Payoneer Integration APIs with CORS enabled
+  x-ibm-name: payoneer-integration-apis-with-cors-enabled
+  version: 1.0.3
+  description: Payoneer APIs with CORS enabled
+schemes:
+- http
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthoperator:
+  - operator
+- oauthadmin:
+  - admin
+securityDefinitions:
+  oauthoperator:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      operator: ""
+  oauthadmin:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      admin: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://partner-services-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+definitions:
+  TransactionHistoryResponse:
+    description: Transaction History Success
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PS-PY-T28
+      message_en:
+        type: string
+        example: Transaction History Fetched Successfully.
+      message_ur:
+        type: string
+        example: کامیابی مینلینڈ دلوایا.
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            txID:
+              type: string
+              example: cb5df350-59a3-4b3a-904d-229aa884b7b4
+            txType:
+              type: string
+              example: Payoneer Transfer
+            txStatus:
+              type: string
+              example: Cancelled
+            msisdn:
+              type: string
+              example: 923040863193
+            currency:
+              type: string
+              example: USD
+            amount:
+              type: string
+              example: 1
+            commitID:
+              type: string
+              example: 00f94747-eed8-4b26-b14d-8269cec76ed1
+            txFee:
+              type: string
+              example: 0.02
+            exchangeRate:
+              type: string
+              example: 157.45
+            amountInPKR:
+              type: string
+              example: 157.45
+            createdAt:
+              type: string
+              example: 2020-11-23T12:35:06.983Z
+            paymentID:
+              type: string
+              example: 4366181896497325
+            txEndDate:
+              type: string
+              example: 20201123
+            txEndTime:
+              type: string
+              example: 121123
+  TransactionStatusFailureResponse:
+    description: Transaction History Failed
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: PS-PY-T36
+      message_en:
+        type: string
+        example: Transaction Status fetching unsucessful.
+      message_ur:
+        type: string
+        example: Transaction Status fetching unsucessful
+      data: {}
+paths:
+  /rest/api/v1/partner/payoneer/parkedTransactions:
+    get:
+      security:
+      - Bearer: []
+      tags:
+      - Parked Transactions
+      summary: Used to fetch all transactions parked in portal
+      description: This API fetch transaction that are parked in portal
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status Fetch successful
+          schema:
+            $ref: '#/definitions/TransactionHistoryResponse'
+        "422":
+          description: Status Fetch unsuccessful
+          schema:
+            $ref: '#/definitions/TransactionStatusFailureResponse'
+  /rest/api/v1/partner/payoneer/transaction/status:
+    get:
+      tags:
+      - Transaction Moneta Status
+      summary: Used to fetch the current status of the transaction from moneta
+      description: This API fetch transaction status from moneta
+      produces:
+      - application/json
+      parameters:
+      - name: paymentID
+        in: query
+        required: true
+        description: paymentID against the transaction.
+        type: string
+      responses:
+        "200":
+          description: Status Fetch successful
+        "422":
+          description: Status Fetch unsuccessful
+          schema:
+            $ref: '#/definitions/TransactionStatusFailureResponse'
+      consumes: []

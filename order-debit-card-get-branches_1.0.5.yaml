@@ -1,0 +1,226 @@
+swagger: "2.0"
+info:
+  title: Order Debit Card - Get branches
+  x-ibm-name: order-debit-card-get-branches
+  version: 1.0.5
+  description: Endpoint for retrieving all branches or specific branches by taking
+    latitude and longitude information.
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  cors:
+    enabled: false
+  gateway: datapower-api-gateway
+  properties:
+    target-url:
+      value: http://secure-card-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: |
+          context.message.header.set('X-META-DATA',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Get branches
+definitions:
+  Response:
+    type: object
+    properties:
+      branchDetails:
+        type: array
+        items:
+          type: object
+        example:
+        - branchID: "1"
+          branchName: MobilXXX XXXXX XXXXX XXX, XXXX, ISLAMABAD
+          Lat: 0.08888
+          Long: 0.9993
+          cityID: 71
+        - branchID: "123"
+          branchName: MobilXXX XXXXX XXXXX XXX, XXXX, ISLAMABAD
+          Lat: 0.081888
+          Long: 0.91993
+          cityID: 72
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/debitcard/orderCard/branches/{cityID}:
+    get:
+      tags:
+      - Get branches
+      summary: Get all branches or specific branch
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: cityID
+        in: path
+        required: true
+        type: integer
+        format: int32
+      responses:
+        "200":
+          description: successful operation
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request on VDC
+        "401":
+          description: Authentication Failure on VDC
+        "422":
+          description: Invalid Request
+      consumes: []
+    parameters: []
+  /rest/api/v1/debitcard/orderCard/branches/:
+    get:
+      tags:
+      - Get branches
+      summary: Get all branches or specific branch
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request on VDC
+        "401":
+          description: Authentication Failure on VDC
+        "422":
+          description: Invalid Request
+      consumes: []
+    parameters: []

@@ -1,0 +1,233 @@
+swagger: "2.0"
+info:
+  title: SendMoneytoBank
+  x-ibm-name: sendmoneytobank
+  version: 1.0.7
+  description: SendMoney to Bank API and this is to initiate the transfer also please
+    see confirm API for confirmation
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauthuser:
+  - user
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: Default Scope for Client Auth
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthuser:
+    type: oauth2
+    flow: application
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      user: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+definitions:
+  request:
+    type: object
+    properties:
+      amount:
+        type: number
+        format: double
+        example: 100
+      receiverDetails:
+        type: object
+        properties:
+          bankCode:
+            type: string
+            example: 8
+            description: Refer to masterData/getBankList  same as bank IMD
+          bankAccountNumber:
+            type: string
+            example: "627100444444440011"
+          receiverNumber:
+            type: string
+            example: "03004345434"
+            description: Optional field
+      purposeofRemittanceCode:
+        type: string
+        example: "0100"
+        description: Refer to masterData/getPaymentPurposeList
+      remarks:
+        type: string
+        example: hakjfdsa dajh
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - amount
+    - receiverDetails
+    - purposeofRemittanceCode
+  response:
+    type: object
+    properties:
+      conversationID:
+        type: string
+        example: AG_20130129T102103
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      receiverName:
+        type: string
+        example: abc khan
+      receiverNumber:
+        type: string
+        example: "03004345434"
+        description: Optional field
+      amount:
+        type: number
+        format: double
+        example: "867.00"
+      deduction:
+        type: number
+        example: 20
+      fed:
+        type: number
+        example: 0.5
+      wht:
+        type: number
+        example: 0.3
+      transEndDate:
+        type: string
+        example: 2004-01-05T00:00:00.000Z
+      transEndTime:
+        type: string
+        example: "03:33:12.943"
+      fee:
+        type: number
+        example: 0.7
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/payment/bank:
+    post:
+      operationId: postSync
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: Client credentials required for API Connect
+        type: string
+      - name: body
+        in: body
+        required: false
+        schema:
+          $ref: '#/definitions/request'
+      responses:
+        "200":
+          description: The operation was successful.
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Failed to confirm payment to bank.
+      consumes:
+      - application/json

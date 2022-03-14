@@ -1,0 +1,261 @@
+swagger: "2.0"
+info:
+  title: Admin API
+  x-ibm-name: admin-api
+  version: 1.0.7
+  description: admin apis
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthadmin:
+  - admin
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthadmin:
+    type: oauth2
+    flow: application
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      admin: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+tags:
+- name: Admin
+definitions:
+  User:
+    title: User
+    type: object
+    properties:
+      _id:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      email:
+        type: string
+      roles:
+        type: array
+        items:
+          type: string
+      "":
+        type: string
+  Error:
+    title: Error
+    type: object
+    properties:
+      message:
+        type: string
+paths:
+  /rest/api/v1/admin:
+    post:
+      summary: Create Admin
+      operationId: post-rest-api-v1-admin
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/User'
+        "422":
+          description: Unprocessable Entity (WebDAV)
+          schema:
+            type: object
+            properties:
+              error:
+                $ref: '#/definitions/Error'
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            password:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+      tags:
+      - Admin
+      description: Create Admin User
+  /rest/api/v1/admin/{id}:
+    parameters:
+    - type: string
+      name: id
+      in: path
+      required: true
+    put:
+      summary: Update Admin
+      operationId: put-rest-api-v1-admin-id
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/User'
+        "422":
+          description: Unprocessable Entity (WebDAV)
+          schema:
+            type: object
+            properties:
+              error:
+                $ref: '#/definitions/Error'
+      tags:
+      - Admin
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            password:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+      description: Update Admin User
+  /rest/api/v1/admin/authenticate:
+    post:
+      summary: Authenticate Admin
+      operationId: post-rest-api-v1-admin-authenticate
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/User'
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+            properties:
+              error:
+                $ref: '#/definitions/Error'
+      description: Admin Authentication
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+      security: []
+      tags:
+      - Admin
+  /rest/api/v1/admin/roles:
+    get:
+      summary: Get Admin Roles
+      tags:
+      - Admin
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: string
+      operationId: get-rest-api-v1-admin-roles
+      description: Update Admin User Role
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            password:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string

@@ -1,0 +1,598 @@
+swagger: "2.0"
+info:
+  title: MasterCard
+  x-ibm-name: mastercard
+  version: 1.0.2
+  description: JazzCash APIs for MasterCard
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://secure-card-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+parameters:
+  acceptLanguage:
+    name: Accept-Language
+    description: Describe which language you prefer to get back the response in ,
+      current possible values are "en" or "ur" for English and Urdu
+    in: header
+    type: string
+  appType:
+    name: X-APP-TYPE
+    description: Describes application or device type.
+    in: header
+    required: true
+    type: string
+    enum:
+    - Android
+    - IOS
+    - Web
+  appVersion:
+    name: X-APP-VERSION
+    description: Describes application version 1.0.1.
+    in: header
+    required: true
+    type: string
+  deviceID:
+    name: X-DEVICE-ID
+    description: Describes device ID XDFSD23345435.
+    in: header
+    required: true
+    type: string
+  ipAddress:
+    name: X-IP-ADDRESS
+    description: Describes IP Address of the device.
+    in: header
+    required: true
+    type: string
+  channel:
+    name: X-CHANNEL
+    description: Describes channel code
+    in: header
+    required: true
+    type: string
+    enum:
+    - Third Party
+    - Mobile APP
+    - Backend Portal
+  ibmClientID:
+    name: X-IBM-CLIENT-ID
+    description: Client credentials required for API Connect
+    in: header
+    required: true
+    type: string
+  msisdn:
+    name: X-MSISDN
+    description: Client credentials required for API Connect
+    in: header
+    required: true
+    type: string
+  mPinHeader:
+    name: X-MPIN
+    description: Client credentials required for API Connect
+    in: header
+    required: true
+    type: string
+definitions:
+  createPinReq:
+    type: object
+    properties:
+      cardPackID:
+        type: string
+        example: PKRJCR0010000000736
+      cardExpiry:
+        type: string
+        example: "0326"
+      cardPin:
+        type: string
+        example: "1234"
+  tempUnBlockReq:
+    type: object
+    properties:
+      cardPackID:
+        type: string
+        example: PKRJCR0010000000736
+  cardNature:
+    type: string
+    example: Physical
+  cardNumber:
+    type: string
+    example: 559177******0812
+  txnLimitsInquiryRsp:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: SC-MC-T01
+      message_en:
+        type: string
+        example: The transaction was completed successfully
+      message_ur:
+        type: string
+        example: The transaction was completed successfully
+      data:
+        type: object
+        properties:
+          POS:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+              transactionLimits:
+                type: object
+                $ref: '#/definitions/transactionLimits'
+          ECOMMERCE:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+              transactionLimits:
+                type: object
+                $ref: '#/definitions/transactionLimits'
+          CONTACTLESS:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                example: false
+              transactionLimits:
+                type: object
+                example: {}
+  txnLimitUpdateReq:
+    type: object
+    properties:
+      cardPackID:
+        type: string
+        example: PKRJCR0010000000736
+      cardNumber:
+        type: string
+        example: 559177******0812
+      previouslyEnabled:
+        type: boolean
+      enabled:
+        type: boolean
+      transactionChannel:
+        type: string
+        example: CONTACTLESS
+      transactionLimits:
+        type: object
+        $ref: '#/definitions/transactionLimits'
+  transactionLimits:
+    type: object
+    properties:
+      floorAmount:
+        type: string
+      ceilingAmount:
+        type: string
+      dailyAmount:
+        type: string
+  permBlockReq:
+    type: object
+    properties:
+      cardPackID:
+        type: string
+        example: PKRJCR0010000000736
+      blockReason:
+        type: string
+        example: "1"
+      cardNature:
+        type: string
+        example: Physical
+      cardNumber:
+        type: string
+        example: 559177******0812
+  tempBlockReq:
+    type: object
+    properties:
+      cardPackID:
+        type: string
+        example: PKRJCR0010000000736
+      blockReason:
+        type: string
+        example: Test
+      cardNature:
+        type: string
+        example: Physical
+      cardNumber:
+        type: string
+        example: 559177******0812
+  mastercardSuccessRsp:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: SC-MC-T01
+      message_en:
+        type: string
+        example: The transaction was completed successfully
+      message_ur:
+        type: string
+        example: The transaction was completed successfully
+      data:
+        type: object
+  error400:
+    description: Bad Request
+    type: object
+    title: Bad Request
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T01
+      responseMessage:
+        type: string
+        example: Bad Request
+  error401:
+    type: object
+    title: Unauthorized
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T02
+      responseMessage:
+        type: string
+        example: Authentication Failed
+  error402:
+    type: object
+    title: Timed-out or Failed to submit the transaction to CPS
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T03
+      responseMessage:
+        type: string
+        example: ""
+  error409:
+    type: object
+    title: Conflict
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T06
+      responseMessage:
+        type: string
+        example: Conflict
+  error500:
+    type: object
+    title: Server Error
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T07
+      responseMessage:
+        type: string
+        example: Internal Server Error
+paths:
+  /rest/api/v1/mastercard/createPin:
+    post:
+      summary: Create Pin
+      tags:
+      - MasterCard
+      parameters:
+      - in: body
+        name: body
+        description: Post request body
+        schema:
+          $ref: '#/definitions/createPinReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      - $ref: '#/parameters/mPinHeader'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/mastercardSuccessRsp'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/mastercard/transaction/limits/{cardPackID}:
+    get:
+      summary: Get Transaction Limits
+      tags:
+      - MasterCard
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/txnLimitsInquiryRsp'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      parameters:
+      - in: path
+        name: cardPackID
+        description: Card Pack Id
+        type: string
+        required: true
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+  /rest/api/v1/mastercard/tempBlock:
+    post:
+      summary: Card Block - Temporary
+      tags:
+      - MasterCard
+      parameters:
+      - in: body
+        name: body
+        description: Post request body
+        schema:
+          $ref: '#/definitions/tempBlockReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      - $ref: '#/parameters/mPinHeader'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/mastercardSuccessRsp'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/mastercard/tempUnblock:
+    post:
+      summary: Card Unblock - Temporary
+      tags:
+      - MasterCard
+      parameters:
+      - in: body
+        name: body
+        description: Post request body
+        schema:
+          $ref: '#/definitions/tempUnBlockReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      - $ref: '#/parameters/mPinHeader'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/mastercardSuccessRsp'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/mastercard/permanentBlock:
+    post:
+      summary: Card Block - Permanent
+      tags:
+      - MasterCard
+      parameters:
+      - in: body
+        name: body
+        description: Post request body
+        schema:
+          $ref: '#/definitions/permBlockReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      - $ref: '#/parameters/mPinHeader'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/mastercardSuccessRsp'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+  /rest/api/v1/mastercard/transaction/limits/update:
+    post:
+      summary: Transaction Limits - Update
+      tags:
+      - MasterCard
+      parameters:
+      - in: body
+        name: body
+        description: Post request body
+        schema:
+          $ref: '#/definitions/txnLimitUpdateReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/ibmClientID'
+      - $ref: '#/parameters/mPinHeader'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/mastercardSuccessRsp'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'

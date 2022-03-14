@@ -1,0 +1,433 @@
+swagger: "2.0"
+info:
+  title: Cash in Doorstep
+  x-ibm-name: cash-in-doorstep
+  x-ibm-summary: 30th March - Merchant Phase-2 Deployment
+  version: 1.0.7
+  description: |-
+    APIs to Cash in Doorstep & its tracking
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://marketplace-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    success-content: activity
+    error-content: header
+    enabled: true
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  buffering: true
+  cors:
+    enabled: true
+definitions:
+  trackRider:
+    type: object
+    properties:
+      orderId:
+        type: string
+        example: LM00000125151
+  cashinInitiate:
+    type: object
+    properties:
+      address:
+        type: string
+        example: Pak Arab, Lahore
+      lat:
+        type: string
+        example: "67.0788404"
+      lng:
+        type: string
+        example: "24.8664477"
+      map_address:
+        type: string
+        example: House 24, Block D, Gulshan e Iqbal, Karachi
+      city_name:
+        type: string
+        example: Karachi
+      details:
+        type: object
+        properties:
+          note:
+            type: string
+            example: Give me a call, When reaced
+          amount:
+            type: integer
+            example: 7000
+          fee:
+            type: integer
+            example: 70
+          recommended_delivery_datetime:
+            type: string
+            example: 2020-03-04T13:10:10.000Z
+    required:
+    - address
+    - lng
+    - map_address
+    - lat
+    - details
+  updateOrder:
+    type: object
+    properties:
+      event:
+        type: string
+        example: ride.opened
+      data:
+        properties:
+          order_ref_id:
+            type: string
+            example: LM0000000124
+          trip_id:
+            type: string
+            example: "null"
+          status:
+            type: string
+            example: Looking For a Rider
+          partner:
+            type: object
+            properties:
+              name:
+                type: string
+                example: ""
+              plate_no:
+                type: string
+                example: ""
+              mobile_no:
+                type: string
+                example: ""
+          last_updated:
+            type: string
+            example: 2020-10-27T15:36:48.000Z
+paths:
+  /rest/api/v1/marketplace/cashindoorstep/trackRider:
+    post:
+      tags:
+      - Track
+      parameters:
+      - name: Accept-Language
+        description: Describe which language you prefer to get back the response in
+          , current possible values are "en" or "ur" for English and Urdu
+        in: header
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+      - name: X-APP-VERSION
+        description: Describes application version 1.0.1.
+        type: string
+        in: header
+        required: true
+      - name: X-DEVICE-ID
+        description: Describes device ID XDFSD23345435.
+        in: header
+        required: true
+        type: string
+      - name: X-IP-ADDRESS
+        description: Describes IP Address of the device.
+        in: header
+        required: true
+        type: string
+      - name: X-CHANNEL
+        description: Describes channel code
+        in: header
+        required: true
+        type: string
+      - name: X-MSISDN
+        in: header
+        description: Client credentials required for API Connect
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/trackRider'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              statusCode:
+                type: number
+                example: MP-CID-T10
+              message_en:
+                type: string
+                example: Order tracking detail found Successfully
+              message_ur:
+                type: string
+                example: Order tracking detail found updated Successfully
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-CID-T09
+              message_en:
+                type: string
+                example: Failed to update order details
+              message_ur:
+                type: string
+                example: Failed to update order details
+      summary: Used by Mobile team to track rider details
+  /rest/api/v1/marketplace/cashindoorstep/trackRequest:
+    get:
+      tags:
+      - Track
+      parameters:
+      - name: Accept-Language
+        in: header
+        required: false
+        description: Describe which language you prefer to get back the response in
+          , current possible values are "en" or "ur" for English and Urdu
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: ANDROID,IOS,Web
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code i.e Third Party,Mobile APP,Backend Portal
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        description: Client credentials required for API Connect 03413366632
+        type: string
+      responses:
+        "200":
+          description: Provides the tracking request details.
+        "422":
+          description: No tracking details found
+      summary: Used to retrieve tracking details
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/cashindoorstep/initiate:
+    post:
+      tags:
+      - Initiate
+      parameters:
+      - name: Accept-Language
+        description: Describe which language you prefer to get back the response in
+          , current possible values are "en" or "ur" for English and Urdu
+        in: header
+        type: string
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+      - name: X-APP-VERSION
+        description: Describes application version 1.0.1.
+        type: string
+        in: header
+        required: true
+      - name: X-DEVICE-ID
+        description: Describes device ID XDFSD23345435.
+        in: header
+        required: true
+        type: string
+      - name: X-IP-ADDRESS
+        description: Describes IP Address of the device.
+        in: header
+        required: true
+        type: string
+      - name: X-CHANNEL
+        description: Describes channel code
+        in: header
+        required: true
+        type: string
+      - name: X-MSISDN
+        in: header
+        description: Client credentials required for API Connect
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/cashinInitiate'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              statusCode:
+                type: number
+                example: MP-CID-T04
+              message_en:
+                type: string
+                example: Request sent Successfully
+              message_ur:
+                type: string
+                example: Request sent Successfully
+              data:
+                type: string
+                example:
+                  order_ref_id: LM000001837848
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-CID-T01
+              message_en:
+                type: string
+                example: Failed to initiate request
+              message_ur:
+                type: string
+                example: Failed to initiate request
+      summary: Used to initiate Cash in Doorstep request
+  /rest/api/v1/marketplace/cashindoorstep/updateOrder:
+    post:
+      tags:
+      - Track
+      parameters:
+      - name: apiKey
+        in: header
+        description: API Key for Bookme to call this API
+        default: d2a7a60564f54cd19367e8eb975efc66
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/updateOrder'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              statusCode:
+                type: number
+                example: MP-CID-T04
+              message_en:
+                type: string
+                example: Order tracking updated Successfully
+              message_ur:
+                type: string
+                example: Order tracking updated Successfully
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: MP-CID-T01
+              message_en:
+                type: string
+                example: Failed to update order details
+              message_ur:
+                type: string
+                example: Failed to update order details
+      summary: Used by bookme to update order details

@@ -1,0 +1,247 @@
+swagger: "2.0"
+info:
+  title: QR Payment - Fonepay
+  x-ibm-name: qr-payment-fonepay
+  version: 1.0.5
+  description: |-
+    Contains APIs For QR Payments - Fonepay
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  catalogs: {}
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  cors:
+    enabled: true
+definitions:
+  ConfirmRequest:
+    type: object
+    properties:
+      transactionType:
+        type: string
+        example: Closed Loop
+      paidVia:
+        type: string
+        example: Scan from Camera, Scan from gallery, Till Number
+      qrCode:
+        type: string
+        example: Static/Till Number
+      qrString:
+        type: string
+        example: null-string
+      amount:
+        type: number
+        example: 100
+      totalAmount:
+        type: number
+        example: 110
+      tipAmount:
+        type: number
+        example: 20
+      convenienceFee:
+        type: number
+        example: 10
+      conveniencePercentage:
+        type: number
+        example: 5
+      merchantDetails:
+        type: object
+        properties:
+          merchantId:
+            type: string
+            example: "1001027"
+          name:
+            type: string
+            example: GO GO TRANSPORT
+          city:
+            type: string
+            example: Lahore
+          pan:
+            type: string
+            example: "111122223333444"
+        required:
+        - merchantId
+        - name
+    required:
+    - transactionType
+    - paidVia
+    - qrCode
+    - qrString
+    - amount
+    - totalAmount
+    - merchantDetails
+  ConfirmResponse:
+    type: object
+    properties:
+      txID:
+        type: string
+        example: 10710822000
+      txStatus:
+        type: string
+        example: Completed
+      txType:
+        type: string
+        example: Mastercard – FonePay C2B
+      paidVia:
+        type: string
+        example: Scan from Camera, Scan from gallery, Till Number
+      qrCode:
+        type: string
+        example: Static/Till Number
+      msisdn:
+        type: string
+        example: 03xxxxx
+      amount:
+        type: string
+        example: "100"
+      fee:
+        type: string
+        example: "0.00"
+      txEndDate:
+        type: string
+        example: "20140102"
+      txEndTime:
+        type: string
+        example: "210159"
+      contextData:
+        type: object
+        properties:
+          ocvID:
+            type: string
+            example: S_X2013012921001
+          cvID:
+            type: string
+            example: AG_20130129T102103
+          merchantDetails:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Al Barkat.com
+              tillNumber:
+                type: string
+                example: "00000016"
+paths:
+  /rest/api/v1/payment/fonepay/confirm:
+    post:
+      tags:
+      - Confirm Fonepay QR Payment
+      summary: Confirm Fonepay QR Payment
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/ConfirmRequest'
+      description: The request body for the operation

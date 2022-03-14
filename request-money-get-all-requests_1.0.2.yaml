@@ -1,0 +1,263 @@
+swagger: "2.0"
+info:
+  title: Request Money Get All Requests
+  x-ibm-name: request-money-get-all-requests
+  version: 1.0.2
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+definitions:
+  ResponseGetLinkedCards:
+    type: object
+    properties:
+      invoiceRequest:
+        type: array
+        items:
+          type: object
+          properties:
+            invoiceType:
+              type: string
+              example: requestMoneyFromFriend
+            createdBy:
+              type: string
+              example: "923040403000"
+            requestedFrom:
+              type: string
+              example: "3424234"
+            amount:
+              type: string
+              example: "70"
+            note:
+              type: string
+              example: "143431"
+            status:
+              type: string
+              example: "143431"
+            reminders:
+              type: string
+              example: "0"
+            invoiceID:
+              type: string
+              example: INV525307
+            createdDate:
+              type: string
+              example: 2020-01-01T00:00:00.000Z
+            recepientDetails:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: test
+                email:
+                  type: string
+                  example: test
+                phoneNo:
+                  type: string
+                  example: "923040403000"
+      quickpayRequest:
+        type: array
+        items:
+          type: object
+          properties:
+            invoiceType:
+              type: string
+              example: requestMoneyFromFriend
+            createdBy:
+              type: string
+              example: "923040403000"
+            requestedFrom:
+              type: string
+              example: "3424234"
+            amount:
+              type: string
+              example: "70"
+            note:
+              type: string
+              example: "143431"
+            status:
+              type: string
+              example: "143431"
+            reminders:
+              type: string
+              example: "0"
+            invoiceID:
+              type: string
+              example: INV525307
+            createdDate:
+              type: string
+              example: 2020-01-01T00:00:00.000Z
+            recepientDetails:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: test
+                email:
+                  type: string
+                  example: test
+                phoneNo:
+                  type: string
+                  example: "923040403000"
+      requestMoneyFromFriend:
+        type: array
+        items:
+          type: object
+          properties:
+            invoiceType:
+              type: string
+              example: requestMoneyFromFriend
+            createdBy:
+              type: string
+              example: "923040403000"
+            requestedFrom:
+              type: string
+              example: "3424234"
+            amount:
+              type: string
+              example: "70"
+            note:
+              type: string
+              example: "143431"
+            status:
+              type: string
+              example: "143431"
+            reminders:
+              type: string
+              example: "0"
+            invoiceID:
+              type: string
+              example: INV525307
+            createdDate:
+              type: string
+              example: 2020-01-01T00:00:00.000Z
+            recepientDetails:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: test
+                email:
+                  type: string
+                  example: test
+                phoneNo:
+                  type: string
+                  example: "923040403000"
+paths:
+  /rest/api/v1/requestmoney/list:
+    get:
+      tags:
+      - MasterCard Details
+      summary: Get all requests
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Failed to fetch request list
+      consumes: []

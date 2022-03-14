@@ -1,0 +1,105 @@
+swagger: "2.0"
+info:
+  title: Payoneer Authentication Redirect API
+  x-ibm-name: payoneer-authentication-redirect-api
+  version: 1.0.5
+  description: Payoneer Authentication Redirect API
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+        backend-type: detect
+  properties:
+    target-url:
+      value: http://partner-services-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: false
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Payoneer Authentication Redirect API
+  description: Payoneer Authentication Redirect API.
+paths:
+  /rest/api/pnr/redirect:
+    get:
+      tags:
+      - Redirect URI Handler for Payoneer
+      summary: Redirect URI Handler for Payoneer
+      description: 'This end-point will serve as a redirect handler for Payoneer,
+        that is why it won''t have any headers or other requirements as it will only
+        be called by Payoneer third party. '
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: code
+        type: string
+        required: false
+        description: authorization code returned by payoneer login page.
+      - in: query
+        name: type
+        type: string
+        required: false
+      - in: query
+        name: session_id
+        type: string
+        required: false
+      - in: query
+        name: response_path
+        type: string
+        required: false
+      responses:
+        "200":
+          description: auth code return
+          schema:
+            properties:
+              code:
+                type: string
+                example: AAJGDMuBZrSwpPLxL1Gn8UYiuEpB9LOCwDJJjzrb8OASOb4rWZ7Aui7tUPth-JbItZoToe9zfqhjirTuJDDcEMzM.....nzFXd1yDyz4PRsNgma8aY
+        "203":
+          description: response_path returned
+          schema:
+            properties:
+              response_path:
+                type: string
+                example: /v4/auth/commitpayments/responses/52e57adc-b732-424e-bd14-c9aea64e9d86

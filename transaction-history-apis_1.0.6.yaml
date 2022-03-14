@@ -1,0 +1,402 @@
+swagger: "2.0"
+info:
+  title: Transaction History APIs
+  x-ibm-name: transaction-history-apis
+  version: 1.0.6
+  description: |-
+    Transaction History APIs
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    success-content: activity
+    error-content: header
+    enabled: true
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  buffering: false
+  cors:
+    enabled: false
+definitions:
+  transactionHistoryRequest:
+    type: object
+    properties:
+      msisdn_txID:
+        type: string
+        example: 9.230467e+23
+      txID:
+        type: string
+        example: 10711076000
+      txType:
+        type: string
+        example: Money Transfer - CNIC
+      msisdn:
+        type: string
+        example: 923046664576
+      txStatus:
+        type: string
+        example: Pending
+      amount:
+        type: integer
+        example: 100.5
+      txEndDate:
+        type: string
+        example: 09/11/2020
+      txEndTime":
+        type: string
+        example: 203408
+      chCode:
+        type: string
+        example: 1031
+      senderMsisdn:
+        type: string
+        example: 923046664576
+      senderName:
+        type: string
+        example: Ali
+      debit:
+        type: string
+        example: true
+      isRepeatable:
+        type: string
+        example: true
+      txCategory:
+        type: string
+        example: CNICPayment
+      fee:
+        type: integer
+        example: 0
+      commission:
+        type: integer
+        example: 0
+      contextData:
+        type: object
+        properties:
+          ocvID:
+            type: string
+            example: 2ef8658909c546f095e7f99528569a15
+          cvID:
+            type: string
+            example: 123
+          rxDetails:
+            type: object
+            properties:
+              cnic:
+                type: string
+                example: 6110189641745
+  transactionHistoryResponse:
+    type: object
+    properties:
+      msisdn_txID:
+        type: string
+        example: 9.230467e+23
+      txID:
+        type: string
+        example: 10711076000
+      txType:
+        type: string
+        example: Money Transfer - CNIC
+      msisdn:
+        type: string
+        example: 923046664576
+      txStatus:
+        type: string
+        example: Pending
+      amount:
+        type: string
+        example: 100.5
+      txEndDate:
+        type: string
+        example: 09/11/2020
+      txEndTime":
+        type: string
+        example: 203408
+      chCode:
+        type: string
+        example: 1031
+      senderMsisdn:
+        type: string
+        example: 923046664576
+      senderName:
+        type: string
+        example: Ali
+      debit:
+        type: string
+        example: true
+      isRepeatable:
+        type: string
+        example: true
+      txCategory:
+        type: string
+        example: CNICPayment
+      fee:
+        type: string
+        example: 0
+      commission:
+        type: string
+        example: 0
+      contextData:
+        type: object
+        properties:
+          ocvID:
+            type: string
+            example: 2ef8658909c546f095e7f99528569a15
+          cvID:
+            type: string
+            example: 123
+          rxDetails:
+            type: object
+            properties:
+              cnic:
+                type: string
+                example: 6110189641745
+  error400:
+    description: Bad Request
+    type: object
+    title: Bad Request
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: PT-RTP-T01
+      responseMessage:
+        type: string
+        example: Bad Request
+  error401:
+    type: object
+    title: Unauthorized
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T02
+      responseMessage:
+        type: string
+        example: Authentication Failed
+  error402:
+    type: object
+    title: Timed-ou or Failed to submit the transaction to CPS
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T03
+      responseMessage:
+        type: string
+        example: ""
+  error409:
+    type: object
+    title: Conflict
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T06
+      responseMessage:
+        type: string
+        example: Conflict
+  error500:
+    type: object
+    title: Server Error
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T07
+      responseMessage:
+        type: string
+        example: Internal Server Error
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/payment/transactions/history:
+    get:
+      tags:
+      - Transcation History
+      summary: Transcation History
+      description: Transcation History
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []
+    put:
+      tags:
+      - Transcation History
+      summary: Transcation History
+      description: Transcation History
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: User MPIN
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: txID
+        in: query
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/transactionHistoryRequest'
+      responses:
+        "200":
+          description: successful operation
+        "422":
+          description: Error
+      consumes: []

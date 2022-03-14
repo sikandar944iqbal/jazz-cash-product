@@ -1,0 +1,844 @@
+swagger: "2.0"
+info:
+  title: Deposit Via Debit Card
+  x-ibm-name: deposit-via-debit-card
+  version: 1.0.9
+  description: JazzCash APIs for Deposit Via Debit Card.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- {}
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://secure-card-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+parameters:
+  acceptLanguage:
+    name: Accept-Language
+    description: Describe which language you prefer to get back the response in ,
+      current possible values are "en" or "ur" for English and Urdu
+    in: header
+    type: string
+  appType:
+    name: X-APP-TYPE
+    description: Describes application or device type.
+    in: header
+    required: true
+    type: string
+    enum:
+    - Android
+    - IOS
+    - Web
+  appVersion:
+    name: X-APP-VERSION
+    description: Describes application version 1.0.1.
+    in: header
+    required: true
+    type: string
+  deviceID:
+    name: X-DEVICE-ID
+    description: Describes device ID XDFSD23345435.
+    in: header
+    required: true
+    type: string
+  ipAddress:
+    name: X-IP-ADDRESS
+    description: Describes IP Address of the device.
+    in: header
+    required: true
+    type: string
+  channel:
+    name: X-CHANNEL
+    description: Describes channel code
+    in: header
+    required: true
+    type: string
+    enum:
+    - Third Party
+    - Mobile APP
+    - Backend Portal
+  msisdn:
+    name: X-MSISDN
+    description: Client credentials required for API Connect
+    in: header
+    required: true
+    type: string
+  mPinHeader:
+    name: X-MPIN
+    description: Client credentials required for API Connect
+    in: header
+    required: false
+    type: string
+definitions:
+  check3DSEnrollmentViaTokenReq:
+    type: object
+    properties:
+      tokenizedCardNumber:
+        type: string
+      amount:
+        type: number
+  check3DSEnrollmentReq:
+    type: object
+    properties:
+      amount:
+        type: number
+        example: 100
+      customerCardNumber:
+        type: string
+      customerCardCvv:
+        type: string
+      customerCardExpiry:
+        type: string
+        example: "1120"
+      saveCardDetails:
+        type: boolean
+  check3DSEnrollmentRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: T01
+      responseMessage_en:
+        type: string
+        example: The transaction was completed successfully.
+      responseMessage_ur:
+        type: string
+        example: The transaction was completed successfully.
+      data:
+        type: object
+        properties:
+          htmlData:
+            type: string
+          txnRefNo:
+            type: string
+  deleteDebitCardRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: T01
+      responseMessage_en:
+        type: string
+        example: The transaction was completed successfully.
+      responseMessage_ur:
+        type: string
+        example: The transaction was completed successfully.
+  debitCardAuthStatusRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+      responseCode:
+        type: string
+        example: T01
+      responseMessage_en:
+        type: string
+        example: The transaction was completed successfully.
+      responseMessage_ur:
+        type: string
+        example: The transaction was completed successfully.
+      data:
+        type: object
+        properties:
+          authStatus:
+            type: string
+            example: PENDING/SUCCESS/FAILURE
+  debitCardListRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: T01
+      responseMessage_en:
+        type: string
+        example: The transaction was completed successfully.
+      responseMessage_ur:
+        type: string
+        example: The transaction was completed successfully.
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/debitCardObj'
+  debitCardObj:
+    type: object
+    properties:
+      tokenizedCardNumber:
+        type: string
+      lastFourDigits:
+        type: string
+      cardType:
+        type: string
+        example: VISA/MASTERCARD
+  confirmDebitCardDepositReq:
+    type: object
+    properties:
+      txnRefNo:
+        type: string
+      customerCardNumber:
+        type: string
+      customerCardCvv:
+        type: string
+      customerCardExpiry:
+        type: string
+  confirmDebitCardDepositViaTokenReq:
+    type: object
+    properties:
+      txnRefNo:
+        type: string
+      tokenizedCardNumber:
+        type: string
+  confirmDebitCardDepositRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          originatorConversationID:
+            type: string
+            example: 247bad68da0e4edaa0ba7eb4ddf3a9cf
+          conversationID:
+            type: string
+            example: AG_20200730_000049564a4e7f3cfc86
+          transactionID:
+            type: string
+            example: 10710713156
+          transEndDate:
+            type: string
+            example: "20200730"
+          transEndTime:
+            type: string
+            example: "150802"
+          commission:
+            type: string
+          beneficiaryName:
+            type: string
+          amount:
+            type: string
+  error400:
+    description: Bad Request
+    type: object
+    title: Bad Request
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T01
+      responseMessage:
+        type: string
+        example: Bad Request
+  error401:
+    type: object
+    title: Unauthorized
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T02
+      responseMessage:
+        type: string
+        example: Authentication Failed
+  error402:
+    type: object
+    title: Timed-out or Failed to submit the transaction to CPS
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T03
+      responseMessage:
+        type: string
+        example: ""
+  error409:
+    type: object
+    title: Conflict
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T06
+      responseMessage:
+        type: string
+        example: Conflict
+  error500:
+    type: object
+    title: Server Error
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T07
+      responseMessage:
+        type: string
+        example: Internal Server Error
+paths:
+  /rest/api/v1/debitcard:
+    get:
+      tags:
+      - Debit Card Deposit
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/debitCardListRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      summary: Fetch all linked debit cards
+      consumes: []
+      produces: []
+    parameters:
+    - name: Accept-Language
+      in: header
+      required: false
+      description: Describe which language you prefer to get back the response in
+        , current possible values are "en" or "ur" for English and Urdu
+      type: string
+    - name: X-APP-TYPE
+      in: header
+      required: true
+      description: Describes application or device type.
+      type: string
+    - name: X-APP-VERSION
+      in: header
+      required: true
+      description: Describes application version 1.0.1.
+      type: string
+    - name: X-DEVICE-ID
+      in: header
+      required: true
+      description: Describes device ID XDFSD23345435.
+      type: string
+    - name: X-IP-ADDRESS
+      in: header
+      required: true
+      description: Describes IP Address of the device.
+      type: string
+    - name: X-CHANNEL
+      in: header
+      required: true
+      description: Describes channel code
+      type: string
+    - name: X-MSISDN
+      in: header
+      required: true
+      description: Client credentials required for API Connect
+      type: string
+    - name: X-MPIN
+      description: Client credentials required for API Connect
+      in: header
+      required: false
+      type: string
+  /rest/api/v1/deposit/debitcard/auth/status/{txnRefNo}:
+    get:
+      tags:
+      - Debit Card Deposit
+      parameters:
+      - in: path
+        name: txnRefNo
+        type: string
+        required: true
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/debitCardAuthStatusRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      summary: Check auth status (Poll this API)
+    parameters:
+    - name: Accept-Language
+      in: header
+      required: false
+      description: Describe which language you prefer to get back the response in
+        , current possible values are "en" or "ur" for English and Urdu
+      type: string
+    - name: X-APP-TYPE
+      in: header
+      required: true
+      description: Describes application or device type.
+      type: string
+    - name: X-APP-VERSION
+      in: header
+      required: true
+      description: Describes application version 1.0.1.
+      type: string
+    - name: X-DEVICE-ID
+      in: header
+      required: true
+      description: Describes device ID XDFSD23345435.
+      type: string
+    - name: X-IP-ADDRESS
+      in: header
+      required: true
+      description: Describes IP Address of the device.
+      type: string
+    - name: X-CHANNEL
+      in: header
+      required: true
+      description: Describes channel code
+      type: string
+    - name: X-MSISDN
+      in: header
+      required: true
+      description: Client credentials required for API Connect
+      type: string
+    - name: X-MPIN
+      description: Client credentials required for API Connect
+      in: header
+      required: false
+      type: string
+  /rest/api/v1/deposit/debitcard/check3DS:
+    post:
+      tags:
+      - Debit Card Deposit
+      parameters:
+      - in: body
+        name: body
+        description: Post body for check 3DS enrollment
+        schema:
+          $ref: '#/definitions/check3DSEnrollmentReq'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/check3DSEnrollmentRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      summary: Checks debit card is 3D Secured or not
+    parameters:
+    - name: Accept-Language
+      in: header
+      required: false
+      description: Describe which language you prefer to get back the response in
+        , current possible values are "en" or "ur" for English and Urdu
+      type: string
+    - name: X-APP-TYPE
+      in: header
+      required: true
+      description: Describes application or device type.
+      type: string
+    - name: X-APP-VERSION
+      in: header
+      required: true
+      description: Describes application version 1.0.1.
+      type: string
+    - name: X-DEVICE-ID
+      in: header
+      required: true
+      description: Describes device ID XDFSD23345435.
+      type: string
+    - name: X-IP-ADDRESS
+      in: header
+      required: true
+      description: Describes IP Address of the device.
+      type: string
+    - name: X-CHANNEL
+      in: header
+      required: true
+      description: Describes channel code
+      type: string
+    - name: X-MSISDN
+      in: header
+      required: true
+      description: Client credentials required for API Connect
+      type: string
+    - name: X-MPIN
+      description: Client credentials required for API Connect
+      in: header
+      required: false
+      type: string
+  /rest/api/v1/deposit/debitcard/check3DSviaToken:
+    post:
+      tags:
+      - Debit Card Deposit
+      parameters:
+      - in: body
+        name: body
+        description: Post body for check 3DS enrollment
+        schema:
+          $ref: '#/definitions/check3DSEnrollmentViaTokenReq'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/check3DSEnrollmentRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      summary: Checks linked debit card is 3D Secured or not
+    parameters:
+    - name: Accept-Language
+      in: header
+      required: false
+      description: Describe which language you prefer to get back the response in
+        , current possible values are "en" or "ur" for English and Urdu
+      type: string
+    - name: X-APP-TYPE
+      in: header
+      required: true
+      description: Describes application or device type.
+      type: string
+    - name: X-APP-VERSION
+      in: header
+      required: true
+      description: Describes application version 1.0.1.
+      type: string
+    - name: X-DEVICE-ID
+      in: header
+      required: true
+      description: Describes device ID XDFSD23345435.
+      type: string
+    - name: X-IP-ADDRESS
+      in: header
+      required: true
+      description: Describes IP Address of the device.
+      type: string
+    - name: X-CHANNEL
+      in: header
+      required: true
+      description: Describes channel code
+      type: string
+    - name: X-MSISDN
+      in: header
+      required: true
+      description: Client credentials required for API Connect
+      type: string
+    - name: X-MPIN
+      description: Client credentials required for API Connect
+      in: header
+      required: false
+      type: string
+  /rest/api/v1/deposit/debitcard/confirm:
+    post:
+      tags:
+      - Debit Card Deposit
+      parameters:
+      - in: body
+        name: body
+        description: Post body for confirm deposit
+        schema:
+          $ref: '#/definitions/confirmDebitCardDepositReq'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/confirmDebitCardDepositRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      summary: Confirm deposit using MPIN
+  /rest/api/v1/deposit/debitcard/confirmViaToken:
+    post:
+      tags:
+      - Debit Card Deposit
+      parameters:
+      - in: body
+        name: body
+        description: Post body for confirm deposit via token
+        schema:
+          $ref: '#/definitions/confirmDebitCardDepositViaTokenReq'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/confirmDebitCardDepositRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      summary: Confirm deposit using MPIN
+    parameters:
+    - name: Accept-Language
+      in: header
+      required: false
+      description: Describe which language you prefer to get back the response in
+        , current possible values are "en" or "ur" for English and Urdu
+      type: string
+    - name: X-APP-TYPE
+      in: header
+      required: true
+      description: Describes application or device type.
+      type: string
+    - name: X-APP-VERSION
+      in: header
+      required: true
+      description: Describes application version 1.0.1.
+      type: string
+    - name: X-DEVICE-ID
+      in: header
+      required: true
+      description: Describes device ID XDFSD23345435.
+      type: string
+    - name: X-IP-ADDRESS
+      in: header
+      required: true
+      description: Describes IP Address of the device.
+      type: string
+    - name: X-CHANNEL
+      in: header
+      required: true
+      description: Describes channel code
+      type: string
+    - name: X-MSISDN
+      in: header
+      required: true
+      description: Client credentials required for API Connect
+      type: string
+    - name: X-MPIN
+      in: header
+      required: true
+      description: Client credentials required for API Connect
+      type: string
+  /rest/api/v1/debitcard/{tokenizedCardNumber}:
+    delete:
+      tags:
+      - Debit Card Deposit
+      parameters:
+      - in: path
+        name: tokenizedCardNumber
+        type: string
+        required: true
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/deleteDebitCardRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      summary: Delete linked card
+    parameters:
+    - name: Accept-Language
+      in: header
+      required: false
+      description: Describe which language you prefer to get back the response in
+        , current possible values are "en" or "ur" for English and Urdu
+      type: string
+    - name: X-APP-TYPE
+      in: header
+      required: true
+      description: Describes application or device type.
+      type: string
+    - name: X-APP-VERSION
+      in: header
+      required: true
+      description: Describes application version 1.0.1.
+      type: string
+    - name: X-DEVICE-ID
+      in: header
+      required: true
+      description: Describes device ID XDFSD23345435.
+      type: string
+    - name: X-IP-ADDRESS
+      in: header
+      required: true
+      description: Describes IP Address of the device.
+      type: string
+    - name: X-CHANNEL
+      in: header
+      required: true
+      description: Describes channel code
+      type: string
+    - name: X-MSISDN
+      in: header
+      required: true
+      description: Client credentials required for API Connect
+      type: string
+    - name: X-MPIN
+      description: Client credentials required for API Connect
+      in: header
+      required: false
+      type: string

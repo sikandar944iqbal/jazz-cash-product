@@ -1,0 +1,112 @@
+swagger: "2.0"
+info:
+  title: track invite
+  x-ibm-name: track-invite
+  version: 1.0.2
+  description: Disabling CORS
+schemes:
+- https
+basePath: /
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://10.50.20.72:8070
+      description: The URL of the target service
+      encoded: false
+  application-authentication:
+    certificate: false
+  cors:
+    enabled: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+paths:
+  /rest/api/v1/reward/invite/trackmock:
+    get:
+      responses:
+        "200":
+          description: success
+          schema:
+            type: string
+      consumes: []
+      produces: []
+    parameters:
+    - name: x-app-version
+      in: header
+      required: true
+      type: string
+    - name: x-channel
+      in: header
+      required: true
+      type: string
+    - name: x-device-id
+      in: header
+      required: true
+      type: string
+    - name: x-device-type
+      in: header
+      required: true
+      type: string
+    - name: x-ip-address
+      in: header
+      required: true
+      type: string
+    - name: x-msisdn
+      in: header
+      required: true
+      type: string
+    - name: X-APP-TYPE
+      in: header
+      required: true
+      type: string

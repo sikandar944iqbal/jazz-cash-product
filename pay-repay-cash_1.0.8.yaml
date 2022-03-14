@@ -1,0 +1,614 @@
+swagger: "2.0"
+info:
+  title: Pay & Repay Cash
+  x-ibm-name: pay-repay-cash
+  version: 1.0.8
+  description: |-
+    This API for pay & repay cash operations
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthconsumer:
+  - consumer
+- oauthmerchant:
+  - merchant
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: Default Scope
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+        backend-type: detect
+  properties:
+    target-url:
+      value: http://partner-services-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  catalogs: {}
+  cors:
+    enabled: false
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Pay & Repay Cash
+definitions:
+  checkEligibilityRequest:
+    type: object
+    properties:
+      amount:
+        type: string
+  checkEligibilityResponse:
+    type: object
+    properties:
+      eligibilityRequestID:
+        type: string
+        example: "1605699505904"
+      offerId:
+        type: string
+        example: NTBfMTAwMDBfcm5nXzEwMC4wXzM=
+      maxEligibleAmount:
+        type: string
+        example: "5000"
+      minEligibleAmount:
+        type: string
+        example: "100"
+  applyRequest:
+    type: object
+    properties:
+      amount:
+        type: number
+        example: 100
+      eligibilityRequestID:
+        type: string
+        example: eligibilityRequestId1
+      offerID:
+        type: string
+        example: 7DN5000
+  applyResponse:
+    type: object
+    properties:
+      loanReference:
+        type: string
+        example: "1155324231605801472942"
+      externalTransactionID:
+        type: string
+        example: "1155324231605801472942"
+  getOffersResponse:
+    type: object
+    properties:
+      eligibilityRequestID:
+        type: string
+        example: "1605690648807"
+      maxEligibleAmount:
+        type: string
+        example: "5000"
+      minEligibleAmount:
+        type: string
+        example: "100"
+  getHistoryResponse:
+    type: object
+    properties:
+      transactionList:
+        type: array
+        items:
+          type: object
+          properties:
+            type:
+              type: string
+              example: ADVANCE
+            loanItemID:
+              type: string
+              example: "1"
+            loanItemName:
+              type: string
+              example: loan1
+            loanReference:
+              type: string
+              example: loanReference1
+            borrowerID:
+              type: string
+              example: "123234234234"
+            accountID:
+              type: string
+              example: "678678"
+            serviceID:
+              type: string
+              example: "12345"
+            principalAmount:
+              type: number
+              example: 100
+            feeAmount:
+              type: number
+              example: 12
+            loanMaturity:
+              type: number
+              example: 23
+            principalAmountBefore:
+              type: number
+              example: 0
+            principalAmountAfter:
+              type: number
+              example: 100
+            principalAdjustment:
+              type: number
+              example: 100
+            feeAmountBefore:
+              type: number
+              example: 0
+            feeAmountAfter:
+              type: number
+              example: 3
+            feeAdjustment:
+              type: number
+              example: 3
+            transactionTimestamp:
+              type: string
+              example: 2017-09-08T13:52:45:349+0000
+            channel:
+              type: string
+              example: SMS
+            endpoint:
+              type: string
+              example: endpoint1
+            status:
+              type: string
+              example: OK
+            statusDescr:
+              type: string
+              example: OK
+  getBalanceResponse:
+    type: object
+    properties:
+      loanBalancesList:
+        type: array
+        items:
+          type: object
+          properties:
+            loanReference:
+              type: string
+              example: loanReference1
+            externalTransactionID:
+              type: string
+              example: externalTransactionID1
+            accountID:
+              type: string
+              example: "123234234"
+            borrowerID:
+              type: string
+              example: "234234"
+            balances:
+              type: array
+              items:
+                type: object
+                properties:
+                  balanceAmount:
+                    type: number
+                    example: 103
+                  principalAmount:
+                    type: number
+                    example: 100
+                  feeAmount:
+                    type: number
+                    example: 3
+                  description:
+                    type: string
+                    example: "100"
+                  validUntil:
+                    type: string
+                    example: 2017-09-08T14:19:24:281+0000
+                  balanceType:
+                    type: string
+                    example: CURRENT_AMOUNT
+  repayRequest:
+    type: object
+    properties:
+      targetMSISDN:
+        type: string
+        example: "923046664576"
+  repayResponse:
+    type: object
+    properties:
+      originatorConversationID:
+        type: string
+        example: 09734fd458694f00b211db769fb2bcfa
+      transactionID:
+        type: string
+        example: 10711172000
+      conversationID:
+        type: string
+        example: AG_20201123_000063653cb43c8a2743
+      transEndDate:
+        type: string
+        example: "20201123"
+      transEndTime:
+        type: string
+        example: "175349"
+      transactionType:
+        type: string
+        example: PayBill
+      transactionData:
+        type: object
+        properties:
+          deduction:
+            type: string
+            example: "0.00"
+          wht:
+            type: string
+            example: "0.00"
+          commission:
+            type: string
+            example: "0.00"
+          fed:
+            type: string
+            example: "0.00"
+          fee:
+            type: string
+            example: "0.00"
+          billingDetails:
+            type: object
+            properties:
+              consumerRefNum:
+                type: string
+                example: "1010000014"
+              companyShortName:
+                type: string
+                example: ""
+              month:
+                type: string
+                example: ""
+              dueDate:
+                type: string
+                example: ""
+              dueAmount:
+                type: string
+                example: "0.00"
+              amount:
+                type: string
+                example: "0.00"
+              balance:
+                type: string
+                example: "0.00"
+paths:
+  /rest/api/v1/lending/getOffers:
+    get:
+      tags:
+      - Get Loan Limits
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-IBM-CLIENT-ID
+        in: header
+        required: true
+        description: Client credentials required for API Connect
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Fail to get loan limits
+      consumes: []
+  /rest/api/v1/lending/balance:
+    get:
+      tags:
+      - Get Loan Balance
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Fail to get loan balance
+      consumes: []
+  /rest/api/v1/lending/repay:
+    post:
+      tags:
+      - repay loan
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/repayRequest'
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Fail to repay loan
+      consumes: []
+  /rest/api/v1/lending/history:
+    get:
+      tags:
+      - Get Loan Transaction History
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Fail to get loan transaction history
+      consumes: []
+  /rest/api/v1/lending/apply:
+    post:
+      tags:
+      - Apply For Loan
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/applyRequest'
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Fail to apply the loan
+      consumes: []
+  /rest/api/v1/lending/checkEligibility:
+    post:
+      tags:
+      - Check Loan Eligibility
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        description: The request body for the operation
+        schema:
+          $ref: '#/definitions/checkEligibilityRequest'
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Fail to check loan eligibility
+      consumes: []

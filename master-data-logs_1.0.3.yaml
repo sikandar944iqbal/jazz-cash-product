@@ -1,0 +1,151 @@
+swagger: "2.0"
+info:
+  title: Master Data Logs
+  x-ibm-name: master-data-logs
+  version: 1.0.3
+  description: Master Data Logs
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthadmin:
+  - admin
+- oauthprovider-admin:
+  - admin
+securityDefinitions:
+  oauthprovider-admin:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauthprovider-admin
+    tokenUrl: https://$(catalog.url)/rest/api/oauthprovider-admin/oauth2/token
+    scopes:
+      admin: ""
+  oauthadmin:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      admin: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://masterdata-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+definitions:
+  auditLogs:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+        example: T01
+      responseMessage_en:
+        type: string
+        example: The transaction was completed successfully.
+      responseMessage_ur:
+        type: string
+        example: The transaction was completed successfully.
+      data:
+        type: array
+        items:
+          properties:
+            logUser:
+              type: number
+            logUserType:
+              type: string
+            logAppType:
+              type: string
+            logTime:
+              type: string
+            logMethod:
+              type: string
+            logUseCase:
+              type: string
+            logData:
+              type: string
+paths:
+  /rest/api/v1/masterdata/logs:
+    get:
+      tags:
+      - Audit Logs
+      summary: Get Logs
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      description: ""
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/auditLogs'
+        "400":
+          description: Invalid Operation
+        "404":
+          description: Logs not found
+      consumes: []

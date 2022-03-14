@@ -1,0 +1,371 @@
+swagger: "2.0"
+info:
+  title: SendMoneyConfirm
+  x-ibm-name: sendmoneyconfirm
+  version: 1.0.6
+  description: |-
+    SendMoney confirm API to confirm already initiated transactions for any type of send money
+    Disabling CORS
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+    catch: []
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  catalogs: {}
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  cors:
+    enabled: true
+definitions:
+  request:
+    type: object
+    properties:
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      transactionType:
+        type: string
+        example: C2C/BA/CNIC
+      remarks:
+        type: string
+        example: hakjfdsa dajh
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+  response:
+    type: object
+    properties:
+      originatorConversationID:
+        type: string
+        example: 247bad68da0e4edaa0ba7eb4ddf3a9cf
+      conversationID:
+        type: string
+        example: AG_20200730_000049564a4e7f3cfc86
+      transactionID:
+        type: string
+        example: 10710713156
+      transEndDate:
+        type: string
+        example: "20200730"
+      transEndTime:
+        type: string
+        example: "150802"
+      transactionData:
+        type: object
+        properties:
+          bank:
+            type: object
+            properties:
+              amount:
+                type: number
+                format: double
+                example: "10.00"
+              channelCode:
+                type: string
+                example: "1020"
+              deduction:
+                type: number
+                format: double
+                example: "10.00"
+              commission:
+                type: number
+                format: double
+                example: "0.00"
+              receiverMSISDN:
+                type: string
+                example: "923345494749"
+              fed:
+                type: number
+                example: 0
+              wht:
+                type: number
+                example: 0
+              fee:
+                type: number
+                example: 0
+              receiverDetails:
+                type: object
+                properties:
+                  bankName:
+                    type: string
+                    example: HBL
+                  bankAccountNumber:
+                    type: string
+                    example: "00020000011005352"
+          C2C:
+            type: object
+            properties:
+              amount:
+                type: number
+                format: double
+                example: "10.00"
+              fed:
+                type: number
+                example: 0
+              wht:
+                type: number
+                example: 0
+              fee:
+                type: number
+                example: 0
+              deduction:
+                type: number
+                format: double
+                example: "10.00"
+              commission:
+                type: number
+                format: double
+                example: "0.00"
+              receiverDetails:
+                type: object
+                properties:
+                  beneficiaryName:
+                    type: string
+                    example: Jahangir Khalid
+          CNIC:
+            type: object
+            properties:
+              amount:
+                type: number
+                format: double
+                example: "10.00"
+              fed:
+                type: number
+                example: 0
+              wht:
+                type: number
+                example: 0
+              fee:
+                type: number
+                example: 0
+              deduction:
+                type: number
+                format: double
+                example: "10.00"
+              commission:
+                type: number
+                format: double
+                example: "0.00"
+              receiverDetails:
+                type: object
+                properties:
+                  cnic:
+                    type: string
+                    example: "6110189641745"
+                  bankAccountNumber:
+                    type: string
+                    example: "923455917646"
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/payment/confirm:
+    post:
+      security:
+      - Bearer: []
+      operationId: postSync
+      tags:
+      - ConfirmTransaction
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      - in: header
+        name: X-MPIN
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/request'
+      responses:
+        "200":
+          description: The operation was successful.
+          schema:
+            properties:
+              success:
+                type: boolean
+              responseCode:
+                type: string
+                example: SM-CNIC/C2C/BA-36
+              message_en:
+                type: string
+                example: Money transferred successfully to bank/CNIC/Jazzcash account
+              message_ur:
+                type: string
+                example: Money transferred successfully to Bank/CNIC/Jazzcash account
+              data:
+                $ref: '#/definitions/response'
+              additionalDetails:
+                items:
+                  $ref: '#/definitions/additionalObject'
+        "401":
+          description: Unable to connect to the Enterprise Service Bus
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: SM-CNIC/C2C/BA-T02
+              responseMessage:
+                type: string
+                example: Unable to connect to the Enterprise Service Bus
+        "402":
+          description: The Request timed out
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: SM-CNIC/C2C/BA-T03
+              responseMessage:
+                type: string
+                example: The Request timed out
+        "422":
+          description: Failed to submit the transaction due to missing mandatory parameters.
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: SM-CNIC/C2C/BA-T34
+              responseMessage:
+                type: string
+                example: Failed to submit the transaction due to missing mandatory
+                  parameters.
+        "501":
+          description: Unexpected Internal server error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: SM-CNIC/C2C/BA-T01
+              responseMessage:
+                type: string
+                example: Unexpected Internal server error
+      consumes:
+      - application/json

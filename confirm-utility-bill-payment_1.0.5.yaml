@@ -1,0 +1,266 @@
+swagger: "2.0"
+info:
+  title: Confirm Utility Bill Payment
+  x-ibm-name: confirm-utility-bill-payment
+  version: 1.0.5
+  description: This API confirms the payment of utility bills
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Confirm Utility Bill Payment
+  description: This API confirms the payment of utility bills
+definitions:
+  Request:
+    type: object
+    properties:
+      amount:
+        type: string
+        example: "100"
+      isSaved:
+        type: boolean
+        example: true
+      billingDetails:
+        type: object
+        properties:
+          consumerRefNum:
+            type: string
+            example: "3415678906"
+          companyCode:
+            type: string
+            example: "3434"
+          customerMSISDN:
+            type: string
+            example: 3455917600
+          companyName:
+            type: string
+            example: UPB
+          category:
+            type: string
+            example: Utility
+          subCategory:
+            type: string
+            example: Electricity
+        required:
+        - consumerRefNum
+        - companyCode
+      remarks:
+        type: string
+        example: sample remarks
+      additionalDetails:
+        type: object
+        properties:
+          key:
+            type: string
+            example: abc
+          value:
+            type: string
+            example: def
+    required:
+    - billingDetails
+    - isSaved
+  Response:
+    type: object
+    properties:
+      conversationID:
+        type: string
+        example: AG_20130129T102103
+      transactionID:
+        type: string
+        example: XD2013012923789234
+      transEndDate:
+        type: string
+        example: 2004-01-05T00:00:00.000Z
+      transEndTime:
+        type: string
+        example: "03:33:12.943"
+      transactionType:
+        type: string
+        example: C2B
+      transactionData:
+        type: object
+        properties:
+          deduction:
+            type: number
+            format: double
+            example: "5000.00"
+          commission:
+            type: number
+            format: double
+            example: "867.00"
+          fed:
+            type: number
+            example: 0.5
+          wht:
+            type: number
+            example: 0.3
+          fee:
+            type: number
+            example: 0.7
+          billingDetails:
+            type: object
+            properties:
+              consumerRefNum:
+                type: string
+                example: "3415678906"
+              companyShortName:
+                type: string
+                example: Mobilink
+              month:
+                type: string
+                example: 2014-01
+              dueDate:
+                type: string
+                example: 2014-09-01T00:00:00.000Z
+              dueAmount:
+                type: number
+                format: double
+                example: "100.00"
+              amount:
+                type: number
+                format: double
+                example: "10.00"
+  additionalObject:
+    type: object
+    properties:
+      key:
+        type: string
+        example: abc
+      value:
+        type: string
+        example: def
+paths:
+  /rest/api/v1/payment/utility/confirm:
+    post:
+      tags:
+      - Utility Bill
+      summary: Confirm Utility Bill Payment
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - name: X-APP-TYPE
+        in: header
+        required: true
+        description: Describes application or device type.
+        type: string
+      - name: X-APP-VERSION
+        in: header
+        required: true
+        description: Describes application version 1.0.1.
+        type: string
+      - name: X-DEVICE-ID
+        in: header
+        required: true
+        description: Describes device ID XDFSD23345435.
+        type: string
+      - name: X-IP-ADDRESS
+        in: header
+        required: true
+        description: Describes IP Address of the device.
+        type: string
+      - name: X-CHANNEL
+        in: header
+        required: true
+        description: Describes channel code
+        type: string
+      - name: X-MSISDN
+        in: header
+        required: true
+        type: string
+      - name: X-MPIN
+        in: header
+        required: true
+        description: encrypted
+        type: string
+      responses:
+        "200":
+          description: Bill Payed Successfully
+        "401":
+          description: Authentication Failed
+        "422":
+          description: Failed to submit the transaction due to missing mandatory parameters.
+      consumes: []
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/Request'
+      description: The request body for the operation

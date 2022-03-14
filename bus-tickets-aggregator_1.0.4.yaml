@@ -1,0 +1,1191 @@
+swagger: "2.0"
+info:
+  title: Bus Tickets - Aggregator
+  x-ibm-name: bus-tickets-aggregator
+  version: 1.0.4
+  description: JazzCash APIs for Bus Tickets
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauthuser:
+  - user
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthuser:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      user: Default Scope
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://marketplace-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  catalogs: {}
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  cors:
+    enabled: true
+parameters:
+  acceptLanguage:
+    name: Accept-Language
+    description: Describe which language you prefer to get back the response in ,
+      current possible values are "en" or "ur" for English and Urdu
+    in: header
+    type: string
+  appType:
+    name: X-APP-TYPE
+    description: Describes application or device type.
+    in: header
+    required: true
+    type: string
+    enum:
+    - Android
+    - IOS
+    - Web
+  appVersion:
+    name: X-APP-VERSION
+    description: Describes application version 1.0.1.
+    in: header
+    required: true
+    type: string
+  deviceID:
+    name: X-DEVICE-ID
+    description: Describes device ID XDFSD23345435.
+    in: header
+    required: true
+    type: string
+  ipAddress:
+    name: X-IP-ADDRESS
+    description: Describes IP Address of the device.
+    in: header
+    required: true
+    type: string
+  channel:
+    name: X-CHANNEL
+    description: Describes channel code
+    in: header
+    required: true
+    type: string
+    enum:
+    - Third Party
+    - Mobile APP
+    - Backend Portal
+  msisdn:
+    name: X-MSISDN
+    description: Client credentials required for API Connect
+    in: header
+    required: false
+    type: string
+  mPinHeader:
+    name: X-MPIN
+    description: Client credentials required for API Connect
+    in: header
+    required: true
+    type: string
+definitions:
+  schedulesReq:
+    type: object
+    properties:
+      departureCityId:
+        type: string
+      destinationCityId:
+        type: string
+      departureDate:
+        type: string
+        example: YYYY-MM-DD
+      serviceId:
+        type: array
+        items:
+          type: string
+          example: "123"
+  cancelBusTicketRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+  refundTermsRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          refundableAmount:
+            type: integer
+          termsText:
+            type: string
+  busBookinsRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: array
+        items:
+          properties:
+            aggregatorId:
+              type: string
+            orderId:
+              type: string
+            ticketCode:
+              type: string
+            serviceName:
+              type: string
+            route:
+              type: string
+            noOfSeats:
+              type: integer
+            seatNumbers:
+              type: string
+            seatNumbersMale:
+              type: array
+              example:
+              - 2
+              - 3
+            seatNumbersFemale:
+              type: array
+              example:
+              - 4
+              - 5
+            orderStatus:
+              type: string
+              example: Ticketed/Cancelled/Pending
+            refundStatus:
+              type: string
+              example: Pending/Refunded
+            departureCityName:
+              type: string
+            departureTerminalLat:
+              type: string
+            departureTerminalLng:
+              type: string
+            departureTerminalAddr:
+              type: string
+            departureSlug:
+              type: string
+            destinationCityName:
+              type: string
+            destinationTerminalLat:
+              type: string
+            destinationTerminalLng:
+              type: string
+            destinationTerminalAddr:
+              type: string
+            destinationSlug:
+              type: string
+            departureDate:
+              type: string
+            departureTime:
+              type: string
+            bookingDate:
+              type: string
+            bookingAmount:
+              type: integer
+            discount:
+              type: integer
+            thumbnail:
+              type: string
+              description: URL of bus
+            facilities:
+              type: array
+              items:
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  img:
+                    type: string
+            customerName:
+              type: string
+            customerPhone:
+              type: string
+            customerEmail:
+              type: string
+            cnic:
+              type: string
+            showCancelButton:
+              type: string
+            historyStatus:
+              type: string
+              example: Upcoming/Archive
+  initTicketReq:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      totalAmount:
+        type: integer
+  initTicketRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          originatorConversationId:
+            type: string
+            example: 247bad68da0e4edaa0ba7eb4ddf3a9cf
+          conversationId:
+            type: string
+            example: AG_20200730_000049564a4e7f3cfc86
+          transactionId:
+            type: string
+            example: 10710713156
+          transEndDate:
+            type: string
+            example: "20200730"
+          transEndTime:
+            type: string
+            example: "150802"
+          amount:
+            type: integer
+            example: 500
+          fee:
+            type: integer
+            example: 0
+  confirmTicketRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          aggregatorId:
+            type: string
+          bookingId:
+            type: string
+          referenceBookingId:
+            type: string
+          serviceName:
+            type: string
+          departureCityName:
+            type: string
+          destinationCityName:
+            type: string
+          departureDate:
+            type: string
+          departureTime:
+            type: string
+          totalSeats:
+            type: integer
+          netAmount:
+            type: string
+          handlingCharges:
+            type: string
+          discount:
+            type: integer
+          finalFare:
+            type: integer
+          amountCharged:
+            type: integer
+          fee:
+            type: integer
+          originatorConversationId:
+            type: string
+            example: 247bad68da0e4edaa0ba7eb4ddf3a9cf
+          conversationId:
+            type: string
+            example: AG_20200730_000049564a4e7f3cfc86
+          transactionId:
+            type: string
+            example: 10710713156
+          transEndDate:
+            type: string
+            example: "20200730"
+          transEndTime:
+            type: string
+            example: "150802"
+          commission:
+            type: string
+  confirmTicketReq:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      transactionId:
+        type: string
+      fee:
+        type: integer
+      departureCityId:
+        type: integer
+      destinationCityId:
+        type: integer
+      serviceId:
+        type: integer
+      timeId:
+        type: integer
+      departureDate:
+        type: string
+      departureTime:
+        type: string
+      scheduleId:
+        type: integer
+      routeId:
+        type: integer
+      noOfSeats:
+        type: integer
+      seatNumbersMale:
+        type: string
+      seatNumbersFemale:
+        type: string
+      customerName:
+        type: string
+      customerEmail:
+        type: string
+      cnic:
+        type: string
+      ticketPrice:
+        type: integer
+      totalPrice:
+        type: integer
+      claimId:
+        type: integer
+  applyPromoReq:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      promoCode:
+        type: string
+      ticketFare:
+        type: integer
+      totalFare:
+        type: integer
+  applyPromoRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          promoCode:
+            type: string
+          discount:
+            type: integer
+          claimId:
+            type: integer
+  fetchFlexifareRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          actualTotal:
+            type: integer
+            example: 1000
+          fares:
+            type: array
+            items:
+              type: integer
+              example: 435
+          total:
+            type: integer
+          handlingCharges:
+            type: integer
+          grandTotal:
+            type: integer
+  fetchFlexifareReq:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      departureCityId:
+        type: integer
+      destinationCityId:
+        type: integer
+      serviceId:
+        type: integer
+      departureDate:
+        type: string
+      departureTime:
+        type: string
+      timeId:
+        type: integer
+      scheduleId:
+        type: integer
+      routeId:
+        type: integer
+      noOfSeats:
+        type: integer
+      seatIds:
+        type: string
+        example: 9,10,11
+  fetchSeatPlansRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: object
+        properties:
+          seatplan:
+            type: object
+            properties:
+              rows:
+                type: integer
+              cols:
+                type: integer
+              seats:
+                type: integer
+              seatplan:
+                type: array
+                items:
+                  properties:
+                    seatId:
+                      type: number
+                      example: 1
+                    seatName:
+                      type: string
+                      example: "10"
+                    seatPosition:
+                      type: string
+                      example: "0_2"
+                      description: Row_Column
+                    seatEnabled:
+                      type: boolean
+                    seatFemale:
+                      type: boolean
+                    seatRestrictMale:
+                      type: boolean
+          totalSeats:
+            type: integer
+          totalAvailable:
+            type: integer
+          availableSeats:
+            type: string
+            example: 4,5,6,7
+          totalOccupied:
+            type: integer
+          occupiedSeatsMale:
+            type: string
+            example: 4,5,6
+          occupiedSeatsFemale:
+            type: string
+            example: "7"
+          totalReserved:
+            type: integer
+          reservedSeatsMale:
+            type: string
+            example: 1,2,3
+          reservedSeatsFemale:
+            type: string
+            example: 9,10
+          ticketPrice:
+            type: string
+  fetchSeatPlansReq:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      departureCityId:
+        type: integer
+      destinationCityId:
+        type: integer
+      serviceId:
+        type: integer
+      departureDate:
+        type: string
+      departureTime:
+        type: string
+      timeId:
+        type: integer
+      scheduleId:
+        type: integer
+      routeId:
+        type: integer
+  busSchedulesRes:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      responseCode:
+        type: string
+      message_en:
+        type: string
+      message_ur:
+        type: string
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/busSchedulesArrayRes'
+  busSchedulesArrayRes:
+    type: object
+    properties:
+      aggregatorId:
+        type: string
+      isFlexiFareEnabled:
+        type: boolean
+      departureCityId:
+        type: integer
+      departureCityName:
+        type: string
+      destinationCityId:
+        type: integer
+      destinationCityName:
+        type: string
+      serviceId:
+        type: integer
+      serviceName:
+        type: string
+      timeId:
+        type: integer
+      scheduleId:
+        type: integer
+      routeId:
+        type: integer
+      departureTime:
+        type: string
+      arrivalTime:
+        type: string
+      originalFare:
+        type: integer
+      fare:
+        type: integer
+      handlingCharges:
+        type: integer
+      thumbnail:
+        type: string
+      seats:
+        type: integer
+      busName:
+        type: string
+      busType:
+        type: string
+      facilities:
+        type: array
+        items:
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            img:
+              type: string
+      seatInfo:
+        type: string
+      rating:
+        type: integer
+      maxSeatsSelection:
+        type: integer
+      departureSlug:
+        type: string
+      destinationSlug:
+        type: string
+      timeSlot:
+        type: string
+      timeSlotId:
+        type: string
+      todayOffer:
+        type: boolean
+      contactlessOnboarding:
+        type: boolean
+  error400:
+    description: Bad Request
+    type: object
+    title: Bad Request
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T01
+      responseMessage:
+        type: string
+        example: Bad Request
+  error401:
+    type: object
+    title: Unauthorized
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T02
+      responseMessage:
+        type: string
+        example: Authentication Failed
+  error402:
+    type: object
+    title: Timed-out or Failed to submit the transaction to CPS
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T03
+      responseMessage:
+        type: string
+        example: ""
+  error409:
+    type: object
+    title: Conflict
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T06
+      responseMessage:
+        type: string
+        example: Conflict
+  error500:
+    type: object
+    title: Server Error
+    properties:
+      success:
+        type: string
+        example: "false"
+      responseCode:
+        type: string
+        example: T07
+      responseMessage:
+        type: string
+        example: Internal Server Error
+paths:
+  /rest/api/v1/marketplace/aggregator/bus/confirm:
+    post:
+      summary: Confirm Bus Ticket
+      tags:
+      - Bus Tickets
+      parameters:
+      - name: body
+        in: body
+        required: false
+        description: Post request body for confirm bus ticket
+        schema:
+          $ref: '#/definitions/confirmTicketReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      - $ref: '#/parameters/mPinHeader'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/confirmTicketRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      security:
+      - oauthmerchant:
+        - merchant
+      - oauthconsumer:
+        - consumer
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/aggregator/bus/init:
+    post:
+      summary: Init Trans Bus Ticket
+      tags:
+      - Bus Tickets
+      parameters:
+      - name: body
+        in: body
+        required: false
+        description: Post request body for init bus ticket
+        schema:
+          $ref: '#/definitions/initTicketReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/initTicketRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      security:
+      - oauthmerchant:
+        - merchant
+      - oauthconsumer:
+        - consumer
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/aggregator/bus/promocode/apply:
+    post:
+      summary: Apply Promo Code
+      tags:
+      - Bus Tickets
+      parameters:
+      - name: body
+        in: body
+        required: false
+        description: Post request body for apply promo code
+        schema:
+          $ref: '#/definitions/applyPromoReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/applyPromoRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      security:
+      - oauthmerchant:
+        - merchant
+      - oauthconsumer:
+        - consumer
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/aggregator/bus/flexifare:
+    post:
+      summary: Fetch Flexifare for a Service
+      tags:
+      - Bus Tickets
+      parameters:
+      - name: body
+        in: body
+        required: false
+        description: Post request body for fetch Flexifare
+        schema:
+          $ref: '#/definitions/fetchFlexifareReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/fetchFlexifareRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      security:
+      - oauthmerchant:
+        - merchant
+      - oauthconsumer:
+        - consumer
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/aggregator/bus/seatplan:
+    post:
+      summary: Fetch Seat Plan for a Service
+      tags:
+      - Bus Tickets
+      parameters:
+      - name: body
+        in: body
+        required: false
+        description: Post request body for fetch seat plans
+        schema:
+          $ref: '#/definitions/fetchSeatPlansReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/fetchSeatPlansRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      security:
+      - oauthmerchant:
+        - merchant
+      - oauthconsumer:
+        - consumer
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/aggregator/bus/schedules/{aggregatorId}/{orderId}:
+    delete:
+      summary: Cancel Bus Ticket
+      tags:
+      - Bus Tickets
+      parameters:
+      - name: aggregatorId
+        in: path
+        required: true
+        description: Aggregator Id
+        type: string
+      - name: orderId
+        in: path
+        required: true
+        description: Order Id
+        type: string
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/cancelBusTicketRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      security:
+      - oauthmerchant:
+        - merchant
+      - oauthconsumer:
+        - consumer
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/aggregator/bus/refund/terms/{aggregatorId}/{orderId}:
+    get:
+      summary: Fetch Refund Terms & Conditions
+      tags:
+      - Bus Tickets
+      parameters:
+      - name: aggregatorId
+        in: path
+        required: true
+        description: Aggregator Id
+        type: string
+      - name: orderId
+        in: path
+        required: true
+        description: Order Id
+        type: string
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/refundTermsRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      security:
+      - oauthmerchant:
+        - merchant
+      - oauthconsumer:
+        - consumer
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/aggregator/bus/bookings:
+    get:
+      summary: Fetch all Bookings
+      tags:
+      - Bus Tickets
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/busBookinsRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'
+      parameters:
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      security:
+      - oauthmerchant:
+        - merchant
+      - oauthconsumer:
+        - consumer
+      consumes: []
+      produces: []
+  /rest/api/v1/marketplace/aggregator/bus/schedules:
+    post:
+      summary: Fetch all Bus Schedules
+      tags:
+      - Bus Tickets
+      parameters:
+      - in: body
+        name: Request Body
+        description: Schedules Request Body
+        schema:
+          $ref: '#/definitions/schedulesReq'
+      - $ref: '#/parameters/acceptLanguage'
+      - $ref: '#/parameters/appType'
+      - $ref: '#/parameters/appVersion'
+      - $ref: '#/parameters/deviceID'
+      - $ref: '#/parameters/ipAddress'
+      - $ref: '#/parameters/channel'
+      responses:
+        "200":
+          description: successful request
+          schema:
+            $ref: '#/definitions/busSchedulesRes'
+        "400":
+          description: error - bad request
+          schema:
+            $ref: '#/definitions/error400'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error401'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/error409'
+        "500":
+          description: error - server error
+          schema:
+            $ref: '#/definitions/error500'

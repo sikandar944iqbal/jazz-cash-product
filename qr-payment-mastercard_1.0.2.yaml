@@ -1,0 +1,323 @@
+swagger: "2.0"
+info:
+  title: QR Payment - Mastercard
+  x-ibm-name: qr-payment-mastercard
+  version: 1.0.2
+  description: Contains APIs For QR Payments - Mastercard
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: ""
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: ""
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://payment-and-transaction-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+definitions:
+  ConfirmRequest:
+    type: object
+    properties:
+      transactionType:
+        type: string
+        example: Open Loop
+      paidVia:
+        type: string
+        example: Scan from Camera, Scan from gallery, Till Number
+      qrCode:
+        type: string
+        example: Static / Till Number
+      qrString:
+        type: string
+        example: null-string
+      cardAccepTermID:
+        type: string
+        example: "56445263"
+      cardAccepIDCode:
+        type: string
+        example: "674658974125236"
+      amount:
+        type: number
+        example: 100
+      totalAmount:
+        type: number
+        example: 110
+      surchargeFee:
+        type: number
+        example: 110
+      isDynamicQr:
+        type: string
+        example: 0
+      tipAmount:
+        type: number
+        example: 20
+      convenienceFee:
+        type: number
+        example: 10
+      conveniencePercentage:
+        type: number
+        example: 5
+      conveniencePercentageAmount:
+        type: number
+        example: 5
+      isTipRequired:
+        type: string
+        example: 1
+      ratingIdentifier:
+        type: string
+        example: 123456
+      merchantDetails:
+        type: object
+        properties:
+          tillNumber:
+            type: string
+            example: "1001027"
+          name:
+            type: string
+            example: GO GO TRANSPORT
+          msisdn:
+            type: string
+            example: GO GO TRANSPORT
+        required:
+        - tillNumber
+        - name
+        - msisdn
+    required:
+    - transactionType
+    - paidVia
+    - qrCode
+    - qrString
+    - amount
+    - totalAmount
+    - isDynamicQr
+    - merchantDetails
+    - cardAccepTermID
+    - cardAccepIDCode
+    - isTipRequired
+    - ratingIdentifier
+  ConfirmResponse:
+    type: object
+    properties:
+      txID:
+        type: string
+        example: 10710822000
+      txStatus:
+        type: string
+        example: Completed
+      txType:
+        type: string
+        example: Mastercard – FonePay C2B
+      paidVia:
+        type: string
+        example: Scan from Camera, Scan from gallery, Till Number
+      qrCode:
+        type: string
+        example: Static / Till Number
+      msisdn:
+        type: string
+        example: 03xxxxx
+      amount:
+        type: string
+        example: "100"
+      fee:
+        type: string
+        example: "0.00"
+      txEndDate:
+        type: string
+        example: "20140102"
+      txEndTime:
+        type: string
+        example: "210159"
+      isTipRequired:
+        type: string
+        example: 0
+      tipAmount:
+        type: number
+        example: 5
+      convenienceFee:
+        type: number
+        example: 6
+      conveniencePercentage:
+        type: number
+        example: 2
+      isDynamicQr:
+        type: string
+        example: 1
+      qrString:
+        type: string
+        example: "1230987654"
+      contextData:
+        type: object
+        properties:
+          ocvID:
+            type: string
+            example: S_X2013012921001
+          cvID:
+            type: string
+            example: AG_20130129T102103
+          merchantDetails:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Al Barkat.com
+              tillNumber:
+                type: string
+                example: "00000016"
+paths:
+  /rest/api/v1/payment/qrpayment/mastercard:
+    post:
+      tags:
+      - Confirm Mastercard QR Payment
+      summary: Confirm Mastercard QR Payment
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-MPIN
+        required: true
+        type: string
+        description: User MPIN
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: true
+              responseCode:
+                type: string
+                example: QR-PAY-T34
+              responseMessage_en:
+                type: string
+                example: Payment Successful
+              responseMessage_ur:
+                type: string
+                example: Payment Successful
+              data:
+                $ref: '#/definitions/ConfirmResponse'
+        "422":
+          description: Error
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: QR-PAY-T02
+              responseMessage:
+                type: string
+                example: Error
+    parameters:
+    - name: body
+      in: body
+      schema:
+        $ref: '#/definitions/ConfirmRequest'
+      description: The request body for the operation

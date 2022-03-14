@@ -1,0 +1,700 @@
+swagger: "2.0"
+info:
+  title: Change/Reset MPIN
+  x-ibm-name: change-reset-mpin
+  version: 1.0.8
+  description: This API allows the user to change or reset their MPIN.
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- oauthmerchant:
+  - merchant
+- oauthconsumer:
+  - consumer
+- oauthuser:
+  - user
+- oauth-consumer:
+  - consumer
+securityDefinitions:
+  oauth-consumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider-consumer
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider-consumer/oauth2/token
+    scopes:
+      consumer: ""
+  oauthuser:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      user: Default Scope
+  oauthconsumer:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      consumer: Default Scope for Client Auth
+  oauthmerchant:
+    type: oauth2
+    flow: password
+    x-ibm-oauth-provider: oauth-provider
+    tokenUrl: https://$(catalog.url)/rest/api/oauth-provider/oauth2/token
+    scopes:
+      merchant: Default Scope for Client Auth
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  properties:
+    target-url:
+      value: http://account-management-microservice.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 120
+        parameter-control:
+          type: blacklist
+        header-control:
+          type: blacklist
+          values:
+          - ^X-IBM-Client-Id$
+        inject-proxy-headers: true
+    catch: []
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  catalogs: {}
+  cors:
+    enabled: true
+tags:
+- externalDocs:
+    description: Find out more on box
+    url: http://box.ibm
+  name: Change/Reset MPIN
+  description: Change/Reset MPIN
+definitions:
+  ChangeMPINRequest:
+    type: object
+    properties:
+      currentMPIN:
+        format: number
+        example: 1234
+      newMPIN:
+        format: number
+        example: 8192
+      remark:
+        type: string
+        example: hakjfdsa dajh
+      additionalDetails:
+        type: array
+        items:
+          type: object
+          properties:
+            key:
+              type: string
+              example: abc
+            value:
+              type: string
+              example: def
+  VerifyOTPRequest:
+    type: object
+    properties:
+      OTP:
+        format: number
+        example: 1234
+      OTPType:
+        format: string
+        example: SMS
+  ResetMPINRequest:
+    type: object
+    properties:
+      CNIC:
+        format: number
+        example: 41306-1234567-8
+      DoB:
+        format: string
+        example: 12-12-1980
+  VerifyKYCRequest:
+    type: object
+    properties:
+      MotherMaidenName:
+        format: string
+        example: Fatima Altaf
+      BirthPlace:
+        format: string
+        example: Karachi
+      cnic:
+        format: number
+        example: 4264264264264
+paths:
+  /rest/api/v1/registration/mpin/kyc/query:
+    post:
+      tags:
+      - Query KYC
+      summary: Query KYC
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        type: string
+        required: true
+        description: MSISDN of the user.
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ResetMPINRequest'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+              responseCode:
+                type: string
+                example: AM-RMP-T44
+              message_en:
+                type: string
+                example: Identity Verification Required
+              message_ur:
+                type: string
+                example: Identity Verification Required
+              data:
+                type: object
+                properties:
+                  question1:
+                    type: string
+                    example: Choose your mother's maiden name
+                  optionsMotherMaiden:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - Tahira Zaidi
+                    - Mouna Zaffar
+                    - Fatima Altaf
+                    - Mawiyah
+                  question2:
+                    type: string
+                    example: Choose your place of birth
+                  optionsBirthPlace:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - Mithi
+                    - Khanpur
+                    - Noushero Feroz
+                    - Karachi
+                  msisdn:
+                    type: string
+                    example: 923046664585
+                  cnic:
+                    type: string
+                    example: 4264264264264
+                  next:
+                    type: string
+                    example: /mpin/kyc/verify
+        "422":
+          description: Error Occured
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-RMP-T45
+              responseMessage_en:
+                type: string
+                example: An Error Occured Trying to Query Customer KYC
+              responseMessage_ur:
+                type: string
+                example: An Error Occured Trying to Query Customer KYC
+  /rest/api/v1/registration/mpin/kyc/verify:
+    post:
+      tags:
+      - Verify KYC
+      summary: Verify KYC
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: true
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: true
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        type: string
+        required: true
+        description: MSISDN of the user.
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/VerifyKYCRequest'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+              responseCode:
+                type: string
+                example: AM-RMP-T46
+              message_en:
+                type: string
+                example: Identity Verified Successfully
+              message_ur:
+                type: string
+                example: Identity Verified Successfully
+        "422":
+          description: Error Occured
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-RMP-T47
+              responseMessage_en:
+                type: string
+                example: An Error Occured Trying to Verify Customer KYC
+              responseMessage_ur:
+                type: string
+                example: An Error Occured Trying to Verify Customer KYC
+  /rest/api/v1/registration/change/mpin:
+    post:
+      tags:
+      - Change MPIN
+      summary: Change MPIN
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: false
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: false
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        type: string
+        required: true
+        description: MSISDN of the user.
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ChangeMPINRequest'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+              responseCode:
+                type: number
+                example: AM-CMP-T01
+              responseMessage_en:
+                type: string
+                example: MPIN Changed Successfully
+              responseMessage_ur:
+                type: string
+                example: MPIN Changed Successfully
+        "401":
+          description: Error Occured
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-CMP-T02
+              responseMessage_en:
+                type: string
+                example: An Error Occured Trying to change MPIN.
+              responseMessage_ur:
+                type: string
+                example: An Error Occured Trying to change MPIN.
+  /rest/api/v1/registration/generate/otp:
+    get:
+      tags:
+      - Generate OTP
+      summary: Generate OTP
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: false
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: false
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        type: string
+        required: true
+        description: MSISDN of the user.
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+              responseCode:
+                type: string
+                example: AM-RMP-T02
+              responseMessage_en:
+                type: string
+                example: OTP Generated Successfully
+              responseMessage_ur:
+                type: string
+                example: OTP Generated Successfully
+        "401":
+          description: Error Occured
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-RMP-T07
+              responseMessage_en:
+                type: string
+                example: Fail to generate OTP
+              responseMessage_ur:
+                type: string
+                example: Fail to generate OTP
+  /rest/api/v1/registration/verify/otp:
+    post:
+      tags:
+      - Verify OTP
+      summary: Verify OTP
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: false
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: false
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        type: string
+        required: true
+        description: MSISDN of the user.
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/VerifyOTPRequest'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+              responseCode:
+                type: string
+                example: AM-RMP-T01
+              responseMessage_en:
+                type: string
+                example: OTP verified
+              responseMessage_ur:
+                type: string
+                example: OTP verified
+        "401":
+          description: Error Occured
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-RMP-T06
+              responseMessage_en:
+                type: string
+                example: Fail to verify sms OTP
+              responseMessage_ur:
+                type: string
+                example: Fail to verify sms OTP
+  /rest/api/v1/registration/reset/mpin:
+    post:
+      tags:
+      - Reset MPIN
+      summary: Reset MPIN
+      description: ""
+      produces:
+      - application/json
+      parameters:
+      - in: header
+        name: X-APP-TYPE
+        required: true
+        type: string
+        enum:
+        - Andriod
+        - IOS
+        - Web
+        description: Describes application or device type.
+      - in: header
+        name: X-APP-VERSION
+        required: false
+        type: string
+        description: Describes application version 1.0.1.
+      - in: header
+        name: X-DEVICE-ID
+        required: false
+        type: string
+        description: Describes device ID XDFSD23345435.
+      - in: header
+        name: X-IP-ADDRESS
+        required: true
+        type: string
+        description: Describes IP Address of the device.
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - Third Party
+        - Mobile APP
+        - Backend Portal
+        description: Describes channel code
+      - in: header
+        name: X-MSISDN
+        type: string
+        required: true
+        description: MSISDN of the user.
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ResetMPINRequest'
+        description: The request body for the operation
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            properties:
+              success:
+                type: boolean
+              responseCode:
+                type: string
+                example: AM-RMP-T04
+              message_en:
+                type: string
+                example: MPIN reset successfully
+              message_ur:
+                type: string
+                example: MPIN reset successfully
+              data:
+                type: object
+                properties:
+                  timeout:
+                    type: number
+                    example: 120
+        "401":
+          description: Error Occured
+          schema:
+            properties:
+              success:
+                type: boolean
+                example: false
+              responseCode:
+                type: string
+                example: AM-RMP-T05
+              responseMessage_en:
+                type: string
+                example: An Error Occured Trying Reset MPIN.
+              responseMessage_ur:
+                type: string
+                example: An Error Occured Trying Reset MPIN.

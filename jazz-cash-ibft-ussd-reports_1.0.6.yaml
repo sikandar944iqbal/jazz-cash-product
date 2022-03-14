@@ -1,0 +1,167 @@
+swagger: "2.0"
+info:
+  title: Jazz Cash IBFT & USSD Reports
+  x-ibm-name: jazz-cash-ibft-ussd-reports
+  version: 1.0.6
+  description: |
+    This APIs related to Jazz cash integration that will download csv files
+    Disabling CORS
+host: $(catalog.host)
+schemes:
+- https
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+security:
+- clientID: []
+  clientSecret: []
+securityDefinitions:
+  clientSecret:
+    type: apiKey
+    name: x-ibm-client-secret
+    in: header
+    x-key-type: client_secret
+  clientID:
+    type: apiKey
+    name: X-IBM-Client-Id
+    in: header
+    x-key-type: client_id
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+    - gatewayscript:
+        version: 2.0.0
+        title: gatewayscript
+        source: context.message.header.set('x-user-metadata',context.get('oauth.verified_access_token.misc_info'));
+    - invoke:
+        title: invoke
+        version: 2.0.0
+        verb: keep
+        target-url: $(target-url)$(request.path)
+        follow-redirects: false
+        timeout: 60
+        parameter-control:
+          type: blacklist
+          values: []
+        header-control:
+          type: blacklist
+          values: []
+        inject-proxy-headers: true
+  properties:
+    target-url:
+      value: http://analytics.m11s:3000
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  application-authentication:
+    certificate: false
+  catalogs: {}
+  cors:
+    enabled: true
+paths:
+  /rest/api/v1/reports/statement/ibft/incoming/{start_date}/{end_date}:
+    post:
+      tags:
+      - Incoming
+      summary: ""
+      description: ""
+      produces:
+      - application/json
+      - text/csv
+      parameters:
+      - in: header
+        name: Content-Type
+        required: true
+        type: string
+        description: application/json
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - easypaisa
+        description: Describes channel code
+      - in: path
+        name: start_date
+        type: string
+        required: true
+        description: Start date
+      - in: path
+        name: end_date
+        type: string
+        required: true
+        description: End date
+      responses:
+        "200":
+          description: Success
+        "422":
+          description: TRANSACTION_NOT_ALLOWED
+          schema:
+            properties:
+              responseCode:
+                type: string
+                example: PT-USSD-T02
+              responseMessage:
+                type: string
+                example: Daily receiving limit reached
+              textMessage:
+                type: string
+                example: error message
+  /rest/api/v1/reports/statement/ibft/outgoing/{start_date}/{end_date}:
+    post:
+      tags:
+      - Outgoing
+      summary: ""
+      description: ""
+      produces:
+      - application/json
+      - text/csv
+      parameters:
+      - in: header
+        name: Content-Type
+        required: true
+        type: string
+        description: application/json
+      - in: header
+        name: X-CHANNEL
+        required: true
+        type: string
+        enum:
+        - easypaisa
+        description: Describes channel code
+      - in: path
+        name: start_date
+        type: string
+        required: true
+        description: Start date
+      - in: path
+        name: end_date
+        type: string
+        required: true
+        description: End date
+      responses:
+        "200":
+          description: Success
+        "422":
+          description: TRANSACTION_NOT_ALLOWED
+          schema:
+            properties:
+              responseCode:
+                type: string
+                example: PT-USSD-T02
+              responseMessage:
+                type: string
+                example: Daily receiving limit reached
+              textMessage:
+                type: string
+                example: error message
